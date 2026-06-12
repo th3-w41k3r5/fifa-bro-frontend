@@ -11,7 +11,6 @@ interface BadgeProps {
 }
 
 interface BadgeConfig {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: React.ComponentType<any>;
   bgClass: string;
   textClass: string;

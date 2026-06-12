@@ -16,7 +16,7 @@ export async function generateMetadata(
 
     // Fetch group data
     const response = await fetch(`${API_BASE}/groups/${code}`, {
-      next: { revalidate: 600 }, // 10 minutes
+      next: { revalidate: 30 }, // 10 minutes
     });
 
     if (!response.ok) {
@@ -51,10 +51,7 @@ export async function generateMetadata(
         description,
       },
     };
-  } catch (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _error
-  ) {
+  } catch (error) {
     return {
       title: 'Group Details | FIFA Bro',
       description: 'View FIFA World Cup 2026 group information.',

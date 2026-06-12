@@ -16,7 +16,7 @@ export async function generateMetadata(
 
     // Fetch match data
     const response = await fetch(`${API_BASE}/matches/${id}`, {
-      next: { revalidate: 600 }, // 10 minutes
+      next: { revalidate: 30 }, // 10 minutes
     });
 
     if (!response.ok) {
@@ -55,10 +55,7 @@ export async function generateMetadata(
         description,
       },
     };
-  } catch (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _error
-  ) {
+  } catch (error) {
     return {
       title: 'Match Details | FIFA Bro',
       description: 'View detailed FIFA World Cup 2026 match information.',

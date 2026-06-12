@@ -16,7 +16,6 @@ interface EmptyStateProps {
   variant?: EmptyStateVariant;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const variantDefaults: Record<EmptyStateVariant, { icon: React.ComponentType<any>; title: string }> = {
   search: {
     icon: Search,

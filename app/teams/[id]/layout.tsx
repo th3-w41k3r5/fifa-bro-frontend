@@ -16,7 +16,7 @@ export async function generateMetadata(
 
     // Fetch team data
     const response = await fetch(`${API_BASE}/teams/${id}`, {
-      next: { revalidate: 600 }, // 10 minutes
+      next: { revalidate: 30 }, // 10 minutes
     });
 
     if (!response.ok) {
@@ -51,10 +51,7 @@ export async function generateMetadata(
         description,
       },
     };
-  } catch (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _error
-  ) {
+  } catch (error) {
     return {
       title: 'Team Details | FIFA Bro',
       description: 'View FIFA World Cup 2026 team information.',

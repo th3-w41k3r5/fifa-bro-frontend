@@ -3,14 +3,14 @@ import '../styles/globals.css';
 import { AppChrome, Footer } from '@/components';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://fifabro.vercel.app'),
   title: {
     default: 'FIFA Bro - World Cup 2026 Companion',
     template: '%s | FIFA Bro',
   },
   description: 'Premium FIFA World Cup 2026 companion app. Live matches, standings, groups, teams, and exclusive storylines.',
   keywords: ['FIFA', 'World Cup', '2026', 'football', 'soccer', 'matches', 'standings', 'teams'],
-  authors: [{ name: 'FIFA Bro' }],
+  authors: [{ name: 'Pritam' }],
   viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
   robots: {
     index: true,
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://fifabro.com',
+    url: 'https://fifabro.vercel.app',
     siteName: 'FIFA Bro',
     title: 'FIFA Bro - World Cup 2026 Companion',
     description: 'Premium FIFA World Cup 2026 companion app with live matches, standings, and exclusive content.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/android-chrome-512x512.png',
         width: 1200,
         height: 630,
         alt: 'FIFA Bro World Cup 2026',
@@ -46,10 +46,27 @@ export const metadata: Metadata = {
     creator: '@fifabro',
     title: 'FIFA Bro - World Cup 2026 Companion',
     description: 'Premium FIFA World Cup 2026 companion app with live matches, standings, and exclusive content.',
-    images: ['/og-image.png'],
+    images: ['/android-chrome-512x512.png'],
   },
   alternates: {
-    canonical: 'https://fifabro.com',
+    canonical: 'https://fifabro.vercel.app',
+  },
+  
+  manifest: '/manifest.json',
+
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      {
+        url: '/apple-touch-icon.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+    ],
   },
 };
 

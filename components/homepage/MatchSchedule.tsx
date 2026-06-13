@@ -157,11 +157,10 @@ function FilterButton({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 rounded-2xl border px-4 py-3 text-sm font-extrabold transition-all duration-200 ${
-        active
-          ? 'border-accent bg-accent text-dark shadow-[0_12px_30px_rgba(0,183,255,0.22)]'
-          : 'border-white/[0.08] bg-white/[0.035] text-text-primary hover:border-accent/45 hover:bg-accent/[0.08]'
-      }`}
+      className={`shrink-0 rounded-2xl border px-4 py-3 text-sm font-extrabold transition-all duration-200 ${active
+        ? 'border-accent bg-accent text-dark shadow-[0_12px_30px_rgba(0,183,255,0.22)]'
+        : 'border-white/[0.08] bg-white/[0.035] text-text-primary hover:border-accent/45 hover:bg-accent/[0.08]'
+        }`}
     >
       {children}
     </button>
@@ -181,6 +180,36 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
   const homeWon = hasScore && match.homeScore! > match.awayScore!;
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
   const statusLabel = match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED';
+
+  const status = match.status?.toLowerCase();
+
+  const statusBadge =
+    status === 'live' || status === 'in_progress' ? (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-green-400">
+        <span className="relative z-10 h-2 w-2 rounded-full bg-green-500 animate-pulse-ripple" />
+        LIVE
+      </span>
+    ) : status === 'scheduled' ? (
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-text-secondary">
+        SCHEDULED
+      </span>
+    ) : status === 'complete' ? (
+      <span className="inline-flex rounded-full border border-green-500/15 bg-green-500/5 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-green-300">
+        COMPLETE
+      </span>
+    ) : status === 'postponed' ? (
+      <span className="inline-flex rounded-full border border-warning/20 bg-warning/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-warning">
+        POSTPONED
+      </span>
+    ) : status === 'cancelled' ? (
+      <span className="inline-flex rounded-full border border-danger/20 bg-danger/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-danger">
+        CANCELLED
+      </span>
+    ) : (
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-text-secondary">
+        {statusLabel}
+      </span>
+    );
 
   return (
     <motion.div
@@ -266,14 +295,16 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
         <MatchBadges match={match} />
       </div>
 
-      <div className="mt-3 grid gap-2 border-t border-white/[0.06] pt-3 text-[11px] font-semibold text-text-secondary md:mt-4 md:flex md:flex-wrap md:items-center md:gap-x-5 md:gap-y-2 md:text-xs">
-        <span className="inline-flex w-fit rounded-full border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-text-secondary">
-          {statusLabel}
-        </span>
+      <div className="mt-3 grid grid-cols-[1fr_auto] gap-y-2 border-t border-white/[0.06] pt-3 text-[11px] font-semibold text-text-secondary md:text-xs">
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <MapPin size={13} className="text-accent/70" />
           <span className="truncate">{venue}</span>
         </span>
+
+        <span className="row-span-2 self-center justify-self-end">
+          {statusBadge}
+        </span>
+
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <CalendarDays size={13} className="text-accent/70" />
           <span className="truncate">{match.stage}</span>
@@ -288,9 +319,8 @@ function MatchBadges({ match, compact = false }: { match: MatchSummary; compact?
     <div className="flex flex-wrap items-center justify-end gap-2">
       {match.groupCode && (
         <span
-          className={`rounded-full border border-accent/20 bg-accent/[0.08] font-extrabold uppercase tracking-[0.12em] text-accent ${
-            compact ? 'px-2.5 py-1 text-[9px]' : 'px-3 py-1 text-[10px]'
-          }`}
+          className={`rounded-full border border-accent/20 bg-accent/[0.08] font-extrabold uppercase tracking-[0.12em] text-accent ${compact ? 'px-2.5 py-1 text-[9px]' : 'px-3 py-1 text-[10px]'
+            }`}
         >
           Group {match.groupCode}
         </span>
@@ -325,9 +355,8 @@ function TeamSide({
     >
       {align === 'left' && logo}
       <span
-        className={`truncate border-b-2 pb-1 font-fifa-semi text-[10px] uppercase leading-none tracking-[-0.02em] md:text-[15px] md:text-xl ${
-          winner ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
-        }`}
+        className={`truncate border-b-2 pb-1 font-fifa-semi text-[10px] uppercase leading-none tracking-[-0.02em] md:text-[15px] md:text-xl ${winner ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
+          }`}
       >
         {name}
       </span>

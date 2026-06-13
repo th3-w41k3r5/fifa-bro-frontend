@@ -59,16 +59,28 @@ export const PageContainer: React.FC<PageContainerProps> = ({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent" />
 
           <div className={`${maxWidthClass} relative z-10 mx-auto w-full max-w-full`}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-black text-text-primary md:text-4xl">{header.title}</h1>
-                {header.subtitle && (
-                  <p className="mt-2 max-w-xl text-base font-semibold leading-relaxed text-text-secondary">
-                    {header.subtitle}
-                  </p>
-                )}
+            <div>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-3xl font-black text-text-primary md:text-4xl">
+                  {header.title}
+                </h1>
               </div>
-              {header.action && <div className="flex-shrink-0 mt-2">{header.action}</div>}
+
+              {(header.subtitle || header.action) && (
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  {header.subtitle && (
+                    <p className="max-w-xl text-base font-semibold leading-relaxed text-text-secondary">
+                      {header.subtitle}
+                    </p>
+                  )}
+
+                  {header.action && (
+                    <div className="shrink-0">
+                      {header.action}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

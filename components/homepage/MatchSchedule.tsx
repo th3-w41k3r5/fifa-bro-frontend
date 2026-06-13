@@ -105,7 +105,15 @@ export const MatchSchedule: React.FC<MatchScheduleProps> = ({ matches }) => {
 
       <div className="space-y-10">
         {matchesByDate.map(({ date, matches: dateMatches }) => (
-          <section key={date} className="space-y-4">
+          <section
+            key={date}
+            id={
+              date === new Date().toISOString().split('T')[0]
+                ? 'today-matchday'
+                : undefined
+            }
+            className="space-y-4 scroll-mt-24"
+          >
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-accent">Matchday</p>

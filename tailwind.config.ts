@@ -67,9 +67,20 @@ const config = {
       animation: {
         spin: 'spin 1s linear infinite',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-ripple': 'pulseRipple 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
-      transitionTimingFunction: {
-        'ease-smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      keyframes: {
+        pulseRipple: {
+          '0%': {
+            boxShadow: '0 0 0 0 rgba(34, 197, 94, 0.7)'
+          },
+          '50%': {
+            boxShadow: '0 0 0 5px rgba(34, 197, 94, 0)'
+          },
+          '100%': {
+            boxShadow: '0 0 0 5px rgba(34, 197, 94, 0)'
+          }
+        },
       },
       transitionDuration: {
         150: '150ms',

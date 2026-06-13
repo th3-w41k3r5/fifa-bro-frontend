@@ -12,7 +12,7 @@ import {
   GroupsExplorer,
   TournamentStats,
 } from '@/components/homepage';
-import { Trophy, Zap, BookOpen, Users, BarChart3 } from 'lucide-react';
+import { Trophy, Zap, BookOpen, Users, BarChart3, CalendarDays } from 'lucide-react';
 
 // Import API client and types
 import { getGroups, getHomeData, getMatches, getStandings, getStorylines } from '@/lib/api';
@@ -40,6 +40,17 @@ export default function HomePage() {
   const [standingsError, setStandingsError] = useState<string | null>(null);
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [storylinesError, setStorylinesError] = useState<string | null>(null);
+
+  const scrollToToday = () => {
+    const todaySection = document.getElementById('today-matchday');
+
+    if (todaySection) {
+      todaySection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
 
   // Fetch all data
   useEffect(() => {
@@ -119,6 +130,15 @@ export default function HomePage() {
       header={{
         title: 'FIFA WORLD CUP 2026',
         subtitle: 'Live Coverage & Results',
+        action: (
+          <button
+            onClick={scrollToToday}
+            className="inline-flex items-center gap-2 rounded-2xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-accent transition-all hover:bg-accent/15"
+          >
+            <CalendarDays size={14} />
+            Today's Match
+          </button>
+        ),
       }}
     >
       {mascotEnabled && (

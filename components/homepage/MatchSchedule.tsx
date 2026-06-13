@@ -12,7 +12,6 @@ interface MatchScheduleProps {
 }
 
 const IST_OFFSET_MINUTES = 330;
-const today = new Date().toLocaleDateString('en-CA');
 
 function getKickoffTime(match: MatchSummary) {
   const date = match.matchDate.slice(0, 10);

@@ -136,7 +136,7 @@ export default function HomePage() {
             className="inline-flex items-center gap-2 rounded-2xl border border-accent/20 bg-accent/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-accent transition-all hover:bg-accent/15"
           >
             <CalendarDays size={14} />
-            Today's Match
+            Today&apos;s Matches
           </button>
         ),
       }}

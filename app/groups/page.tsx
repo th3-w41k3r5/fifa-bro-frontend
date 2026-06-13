@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { GroupSummary, MatchSummary } from '@/types';
 import { PageContainer, SectionTitle, LoadingState, EmptyState } from '@/components';
 import { GroupGrid } from '@/components';
+import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupSummary[]>([]);
@@ -42,6 +43,10 @@ export default function GroupsPage() {
   useEffect(() => {
     document.title = 'Groups | FIFA Bro';
   }, []);
+
+  useLiveMatches((liveData) => {
+    setMatches((previousMatches) => applyLiveUpdateToMatches(previousMatches, liveData));
+  });
 
   if (loading) return <LoadingState />;
   if (error || groups.length === 0)

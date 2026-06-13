@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { TeamLogo, Badge } from '@/components';
 import type { MatchSummary } from '@/types';
 import { CalendarDays, Clock, MapPin, Search, X } from 'lucide-react';
+import { getMatchStatusLabel } from '@/lib/matchStatus';
 
 interface MatchScheduleProps {
   matches: MatchSummary[];
@@ -27,17 +28,23 @@ function formatDateKey(match: MatchSummary) {
 }
 
 export const MatchSchedule: React.FC<MatchScheduleProps> = ({ matches }) => {
+  const [liveMatches, setMatches] = useState(matches);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   const groups = useMemo(() => {
-    return Array.from(new Set(matches.map((match) => match.groupCode).filter(Boolean) as string[])).sort();
+    return Array.from(new Set(liveMatches.map((match) => match.groupCode).filter(Boolean) as string[])).sort();
+  }, [liveMatches]);
+
+
+  React.useEffect(() => {
+    setMatches(matches);
   }, [matches]);
 
   const filteredMatches = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return matches.filter((match) => {
+    return liveMatches.filter((match) => {
       const matchesSearch =
         !normalizedSearch ||
         match.homeTeam.toLowerCase().includes(normalizedSearch) ||
@@ -49,7 +56,7 @@ export const MatchSchedule: React.FC<MatchScheduleProps> = ({ matches }) => {
 
       return matchesSearch && matchesGroup;
     });
-  }, [matches, searchTerm, selectedGroup]);
+  }, [liveMatches, searchTerm, selectedGroup]);
 
   const matchesByDate = useMemo(() => {
     const grouped: Record<string, MatchSummary[]> = {};
@@ -187,7 +194,7 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
   const homeWon = hasScore && match.homeScore! > match.awayScore!;
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
-  const statusLabel = match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED';
+  const statusLabel = getMatchStatusLabel(match);
 
   const status = match.status?.toLowerCase();
 
@@ -195,7 +202,7 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
     status === 'live' || status === 'in_progress' ? (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-green-400">
         <span className="relative z-10 h-2 w-2 rounded-full bg-green-500 animate-pulse-ripple" />
-        LIVE
+        {statusLabel}
       </span>
     ) : status === 'scheduled' ? (
       <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-text-secondary">

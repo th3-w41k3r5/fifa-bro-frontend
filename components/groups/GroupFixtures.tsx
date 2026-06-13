@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MatchSummary } from '@/types';
 import { Badge, TeamLogo } from '@/components';
 import { Clock, MapPin } from 'lucide-react';
+import { getMatchStatusLabel } from '@/lib/matchStatus';
 
 interface GroupFixturesProps {
   matches: MatchSummary[];
@@ -51,7 +52,7 @@ function FixtureCard({ match, mounted }: { match: MatchSummary; mounted: boolean
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
   const homeWon = hasScore && match.homeScore! > match.awayScore!;
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
-  const statusLabel = match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED';
+  const statusLabel = getMatchStatusLabel(match);
 
   return (
     <Link href={`/matches/${match.id}`} className="block">

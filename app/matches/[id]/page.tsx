@@ -7,6 +7,7 @@ import MatchHero from '@/components/matches/MatchHero';
 import MatchEditorial from '@/components/matches/MatchEditorial';
 import MatchDetails from '@/components/matches/MatchDetails';
 import RelatedMatches from '@/components/matches/RelatedMatches';
+import { applyLiveUpdateToMatch, applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 interface MatchDetailPageProps {
   params: Promise<{
@@ -82,6 +83,19 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
       document.title = `${data.match.homeTeam} vs ${data.match.awayTeam} | FIFA Bro`;
     }
   }, [data?.match]);
+
+  useLiveMatches((liveData) => {
+    setData((previousData) => {
+      if (!previousData) return previousData;
+
+      return {
+        ...previousData,
+        match: applyLiveUpdateToMatch(previousData.match, liveData),
+      };
+    });
+
+    setAllMatches((previousMatches) => applyLiveUpdateToMatches(previousMatches, liveData));
+  });
 
   if (loading) return <LoadingState />;
   if (error || !data)

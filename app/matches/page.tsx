@@ -7,6 +7,7 @@ import MatchesSearch from '@/components/matches/MatchesSearch';
 import MatchesFilter from '@/components/matches/MatchesFilter';
 import MatchesList from '@/components/matches/MatchesList';
 import { useEffect } from 'react';
+import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 const BADGES = [
@@ -51,6 +52,10 @@ export default function MatchesPage() {
 
     fetchMatches();
   }, []);
+
+  useLiveMatches((data) => {
+    setMatches((previousMatches) => applyLiveUpdateToMatches(previousMatches, data));
+  });
 
   // Filter logic
   const filteredMatches = useMemo(() => {

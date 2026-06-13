@@ -4,6 +4,7 @@ import React from 'react';
 import { MatchSummary } from '@/types';
 import { SectionTitle } from '@/components';
 import { Calendar, Clock, MapPin, Trophy, Users } from 'lucide-react';
+import { getMatchStatusLabel } from '@/lib/matchStatus';
 
 interface MatchDetailsProps {
   match: MatchSummary;
@@ -23,7 +24,7 @@ export default function MatchDetails({ match }: MatchDetailsProps) {
   const details = [
     {
       label: 'Status',
-      value: match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED',
+      value: getMatchStatusLabel(match),
       subtext:
         match.homeScore !== undefined && match.awayScore !== undefined
           ? `${match.homeTeam} ${match.homeScore} - ${match.awayScore} ${match.awayTeam}`

@@ -18,6 +18,7 @@ import { Trophy, Zap, BookOpen, Users, BarChart3, CalendarDays } from 'lucide-re
 import { getGroups, getHomeData, getMatches, getStandings, getStorylines } from '@/lib/api';
 import { useAppSettings } from '@/contexts/AppSettingsContext';
 import type { GroupSummary, HomePayload, MatchSummary, StandingGroup, StorylineSummary } from '@/types';
+import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 export default function HomePage() {
   const { mascotEnabled } = useAppSettings();
@@ -123,6 +124,29 @@ export default function HomePage() {
 
   const homepageStorylines = allStorylines.length > 0 ? allStorylines : (homeData?.storylines ?? []);
   const homepageGroups = allGroups.length > 0 ? allGroups : (homeData?.groups ?? []);
+
+  useLiveMatches((data) => {
+    setAllMatches((previousMatches) => applyLiveUpdateToMatches(previousMatches, data));
+
+    setHomeData((previousHomeData) => {
+      if (!previousHomeData) return previousHomeData;
+
+      return {
+        ...previousHomeData,
+        heroMatch: previousHomeData.heroMatch
+          ? {
+              ...previousHomeData.heroMatch,
+              match: applyLiveUpdateToMatches([previousHomeData.heroMatch.match], data)[0],
+            }
+          : previousHomeData.heroMatch,
+        featuredMatches: previousHomeData.featuredMatches.map((featured) => ({
+          ...featured,
+          match: applyLiveUpdateToMatches([featured.match], data)[0],
+        })),
+        upcomingMatches: applyLiveUpdateToMatches(previousHomeData.upcomingMatches, data),
+      };
+    });
+  });
 
   return (
     <PageContainer

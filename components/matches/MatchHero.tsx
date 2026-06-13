@@ -4,6 +4,7 @@ import React from 'react';
 import { Badge, MatchSummary } from '@/types';
 import { Badge as FixtureBadge, TeamLogo } from '@/components';
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import { getMatchStatusLabel } from '@/lib/matchStatus';
 
 interface MatchHeroProps {
   match: MatchSummary;
@@ -33,7 +34,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
   const homeWon = hasScore && match.homeScore! > match.awayScore!;
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
-  const statusLabel = match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED';
+  const statusLabel = getMatchStatusLabel(match);
 
   return (
     <section className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#080b10] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.30)] md:p-8 lg:p-10">

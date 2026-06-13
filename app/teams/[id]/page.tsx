@@ -12,6 +12,7 @@ import {
   TeamGroupMembers,
   TeamStorylines,
 } from '@/components/teams';
+import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 interface TeamDetailPageProps {
   params: Promise<{
@@ -113,6 +114,23 @@ export default function TeamDetailPage({ params }: TeamDetailPageProps) {
       document.title = `${data.team.name} | FIFA Bro`;
     }
   }, [data?.team?.name]);
+
+  useLiveMatches((liveData) => {
+    setData((previousData) => {
+      if (!previousData) return previousData;
+
+      const matches = applyLiveUpdateToMatches(previousData.matches, liveData);
+
+      return {
+        ...previousData,
+        matches,
+        featuredMatches: previousData.featuredMatches.map((featured) => ({
+          ...featured,
+          match: applyLiveUpdateToMatches([featured.match], liveData)[0],
+        })),
+      };
+    });
+  });
 
   if (!mounted) return null;
 

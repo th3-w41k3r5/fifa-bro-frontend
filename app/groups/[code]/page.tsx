@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { MatchSummary, StandingRow, TeamSummary, FeaturedMatch, StorylineSummary } from '@/types';
 import { PageContainer, LoadingState, EmptyState, SectionTitle } from '@/components';
 import { TeamCard, StandingsTable, GroupFixtures, FeaturedClashes, GroupStats, RelatedGroups } from '@/components';
+import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 interface GroupDetailPageProps {
   params: Promise<{
@@ -90,6 +91,21 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
       document.title = `${data.groupName} | FIFA Bro`;
     }
   }, [data]);
+
+  useLiveMatches((liveData) => {
+    setData((previousData) => {
+      if (!previousData) return previousData;
+
+      return {
+        ...previousData,
+        matches: applyLiveUpdateToMatches(previousData.matches, liveData),
+        featuredMatches: previousData.featuredMatches.map((featured) => ({
+          ...featured,
+          match: applyLiveUpdateToMatches([featured.match], liveData)[0],
+        })),
+      };
+    });
+  });
 
   if (loading) return <LoadingState />;
   if (error || !data)

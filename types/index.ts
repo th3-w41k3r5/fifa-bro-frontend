@@ -58,6 +58,8 @@ export interface MatchSummary {
   city: string;
   badges?: Badge[];
   storylines?: StorylineSummary[];
+  liveMinute?: number;
+  livePeriod?: string;
 }
 
 export interface TeamSummary {

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { TeamLogo } from '@/components';
 import type { MatchSummary, StorylineSummary } from '@/types';
+import { getMatchStatusLabel } from '@/lib/matchStatus';
 import styles from './HeroMatch.module.css';
 
 interface Props {
@@ -110,7 +111,7 @@ export const HeroMatch: React.FC<Props> = ({ match, storyline, allMatches }) => 
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
   const homeWon = hasScore && match.homeScore! > match.awayScore!;
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
-  const statusLabel = match.status ? match.status.replace(/[-_]/g, ' ').toUpperCase() : 'SCHEDULED';
+  const statusLabel = getMatchStatusLabel(match);
 
   return (
     <section className={`${styles.root} animate-fade-in`}>

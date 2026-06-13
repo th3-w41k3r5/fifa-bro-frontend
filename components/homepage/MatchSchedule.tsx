@@ -22,6 +22,17 @@ function getKickoffTime(match: MatchSummary) {
   return new Date(Date.UTC(year, month - 1, day, hour, minute) - IST_OFFSET_MINUTES * 60 * 1000);
 }
 
+function getTodayISTDateString() {
+  const now = new Date();
+
+  const utcMillis = now.getTime() + now.getTimezoneOffset() * 60000;
+  const istMillis = utcMillis + (5.5 * 60 * 60 * 1000);
+  const istDate = new Date(istMillis);
+
+  return istDate.toISOString().split('T')[0];
+}
+
+
 function formatDateKey(match: MatchSummary) {
   return match.matchDate.slice(0, 10);
 }
@@ -108,7 +119,7 @@ export const MatchSchedule: React.FC<MatchScheduleProps> = ({ matches }) => {
           <section
             key={date}
             id={
-              date === new Date().toISOString().split('T')[0]
+              date === getTodayISTDateString()
                 ? 'today-matchday'
                 : undefined
             }

@@ -42,21 +42,29 @@ export default function TeamStandingsTable({ standings, highlightTeam, teams = [
             const team =
               teamsByCode.get(row.teamCode) || teamsByName.get(normalizeTeamKey(row.teamName || row.teamCode));
             const teamName = row.teamName || team?.name || row.teamCode;
-            const tone =
+            const rowTone =
               position <= 2
-                ? 'border-l-emerald-400/80 bg-emerald-400/[0.055]'
+                ? 'bg-emerald-400/[0.12]'
                 : position === 3
-                  ? 'border-l-yellow-300/80 bg-yellow-300/[0.055]'
-                  : 'border-l-white/[0.08]';
+                  ? 'bg-yellow-300/[0.11]'
+                  : 'bg-white/[0.015]';
+            const borderTone =
+              position <= 2
+                ? 'border-l-emerald-300'
+                : position === 3
+                  ? 'border-l-yellow-300'
+                  : 'border-l-white/[0.12]';
 
             return (
               <tr
                 key={row.id ? String(row.id) : `${row.teamName}-${idx}`}
-                className={`border-l-2 transition-colors hover:bg-white/[0.035] ${tone} ${
+                className={`transition-colors hover:bg-white/[0.04] ${rowTone} ${
                   isHighlighted ? 'outline outline-1 outline-accent/35' : ''
                 }`}
               >
-                <td className="px-4 py-4 text-center font-black text-text-secondary">{position}</td>
+                <td className={`border-l-2 px-4 py-4 text-center font-black text-text-primary ${borderTone}`}>
+                  {position}
+                </td>
                 <td className={`px-4 py-4 font-extrabold ${isHighlighted ? 'text-accent' : 'text-text-primary'}`}>
                   <div className="flex min-w-0 items-center gap-3">
                     {team?.flagCode && <Flag flagCode={team.flagCode} size="sm" variant="square" />}

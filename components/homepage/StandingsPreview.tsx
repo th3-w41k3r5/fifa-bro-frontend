@@ -64,22 +64,38 @@ const GroupStandings: React.FC<GroupStandingsProps> = ({ group }) => {
             </tr>
           </thead>
           <tbody>
-            {group.standings.map((standing, index) => (
-              <tr
-                key={standing.teamCode || index}
-                className="border-b border-border/50 hover:bg-surface-elevated/30 transition-colors"
-              >
-                <td className="px-3 py-3 text-text-secondary font-semibold">
-                  {standing.position || index + 1}
-                </td>
-                <td className="px-3 py-3 text-text-primary font-semibold">
-                  {standing.teamName || standing.teamCode || 'TBD'}
-                </td>
-                <td className="px-2 py-3 text-center text-primary font-bold">
-                  {standing.points || 0}
-                </td>
-              </tr>
-            ))}
+            {group.standings.map((standing, index) => {
+              const position = standing.position || index + 1;
+              const rowTone =
+                position <= 2
+                  ? 'bg-emerald-400/[0.12]'
+                  : position === 3
+                    ? 'bg-yellow-300/[0.11]'
+                    : 'bg-white/[0.015]';
+              const borderTone =
+                position <= 2
+                  ? 'border-l-emerald-300'
+                  : position === 3
+                    ? 'border-l-yellow-300'
+                    : 'border-l-white/[0.12]';
+
+              return (
+                <tr
+  key={standing.teamCode || index}
+  className={`border-b border-border/50 border-l-[3px] transition-colors hover:bg-surface-elevated/30 ${rowTone} ${borderTone}`}
+>
+  <td className="px-3 py-3 font-semibold text-text-primary">
+    {position}
+  </td>
+                  <td className="px-3 py-3 font-semibold text-text-primary">
+                    {standing.teamName || standing.teamCode || 'TBD'}
+                  </td>
+                  <td className="px-2 py-3 text-center font-bold text-primary">
+                    {standing.points || 0}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

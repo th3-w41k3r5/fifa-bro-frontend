@@ -139,6 +139,19 @@ export default function TeamDetailPage({ params }: TeamDetailPageProps) {
     return <EmptyState title="Team not found" description={error || 'Unable to load team details.'} />;
 
   const { team, groupName, standings, groupStandings, matches, featuredMatches, storylines, groupTeams } = data;
+  const standingsWithPosition =
+    standings && !standings.position
+      ? {
+          ...standings,
+          position:
+            groupStandings.findIndex((row) => {
+              const rowName = row.teamName?.toLowerCase();
+              const teamName = team.name?.toLowerCase();
+
+              return rowName === teamName || row.teamCode === team.code;
+            }) + 1 || undefined,
+        }
+      : standings;
 
   return (
     <PageContainer>
@@ -147,9 +160,9 @@ export default function TeamDetailPage({ params }: TeamDetailPageProps) {
         <TeamHero team={team} groupName={groupName} />
 
         {/* Team Overview */}
-        {standings && (
+        {standingsWithPosition && (
           <TeamOverview
-            standings={standings}
+            standings={standingsWithPosition}
             groupName={groupName}
             matchCount={matches.length}
             featuredMatchCount={featuredMatches.length}

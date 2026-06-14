@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Eye, EyeOff, Settings, Volume2, VolumeX, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAppSettings } from '@/contexts/AppSettingsContext';
 
 interface SettingsPanelProps {
@@ -23,11 +24,14 @@ function SettingToggle({
   icon: React.ReactNode;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={() => onChange(!checked)}
       className="group flex w-full items-center gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.035] px-4 py-4 text-left transition duration-300 hover:border-accent/25 hover:bg-white/[0.06] active:scale-[0.99]"
       aria-pressed={checked}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.16 }}
     >
       <span
         className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border transition duration-300 ${
@@ -55,7 +59,7 @@ function SettingToggle({
           }`}
         />
       </span>
-    </button>
+    </motion.button>
   );
 }
 

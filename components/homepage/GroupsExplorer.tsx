@@ -164,7 +164,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, standings, teamsByCode, te
           <span className="text-right">Pts</span>
         </div>
 
-        <div className="divide-y divide-white/[0.055]">
+        <div>
           {standings.length > 0 ? (
             standings.map((standing, index) => (
               <StandingLine
@@ -214,18 +214,26 @@ function StandingLine({
   const teamId = teamMeta?.teamCode || standing.teamCode || teamName;
   const teamHref = teamId ? `/teams/${encodeURIComponent(teamId)}` : undefined;
   const flagCode = teamMeta?.flagCode || teamName.toLowerCase().slice(0, 2);
-  const tone =
+  const rowTone =
     position <= 2
-      ? 'border-l-emerald-400/80 bg-emerald-400/[0.075]'
+      ? 'bg-emerald-400/[0.080]'
       : position === 3
-        ? 'border-l-yellow-300/80 bg-yellow-300/[0.07]'
-        : 'border-l-red-400/80 bg-red-400/[0.08]';
+        ? 'bg-yellow-300/[0.080]'
+        : 'bg-red-400/[0.080]';
+  const borderTone =
+    position <= 2
+      ? 'border-l-emerald-300'
+      : position === 3
+        ? 'border-l-yellow-300'
+        : 'border-l-red-700/[0.12]';
 
   return (
     <div
-      className={`grid grid-cols-[34px_1fr_34px_34px_38px] items-center gap-2 border-l-2 px-3 py-3 text-sm transition-colors hover:bg-white/[0.035] ${tone}`}
+      className={`grid grid-cols-[34px_1fr_34px_34px_38px] border-t border-white/[0.055] border-l-2 items-center gap-2 px-3 py-3 text-sm transition-colors hover:bg-white/[0.04] ${rowTone} ${borderTone}`}
     >
-      <span className="font-black text-text-secondary">{position}</span>
+      <span className={`-ml-3 pl-3 font-black text-text-primary`}>
+        {position}
+      </span>
       <span className="flex min-w-0 items-center gap-2">
         <span className="h-5 w-5 shrink-0">
           <TeamLogo flagCode={flagCode} teamName={teamName} size="sm" />

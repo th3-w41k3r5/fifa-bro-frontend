@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '../styles/globals.css';
 import { AppChrome, Footer } from '@/components';
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://fifabro.vercel.app'),
@@ -80,6 +81,7 @@ export default function RootLayout({
       <body className="bg-dark text-text-primary">
         <AppChrome>{children}</AppChrome>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );

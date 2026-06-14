@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { MatchSummary } from "@/types";
 
 export type LiveMatch = {
@@ -63,27 +63,79 @@ export function applyLiveUpdateToMatch(
 export function useLiveMatches(
     onUpdate: (data: LiveUpdatePayload) => void
 ) {
+    const onUpdateRef = useRef(onUpdate);
+
     useEffect(() => {
-        const ws = new WebSocket(
-            "wss://fifa-live-worker.iitjeepritam.workers.dev/ws"
-        );
+        onUpdateRef.current = onUpdate;
+    }, [onUpdate]);
 
-        ws.onopen = () => {
-            console.log("connected");
+    useEffect(() => {
+        let ws: WebSocket | null = null;
+        let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+        let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+        let reconnectAttempt = 0;
+        let closedByReact = false;
+
+        const clearTimers = () => {
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+            reconnectTimer = null;
+            heartbeatTimer = null;
         };
 
-        ws.onmessage = event => {
-            const data = JSON.parse(event.data) as LiveUpdatePayload;
+        const connect = () => {
+            ws = new WebSocket(
+                "wss://fifa-live-worker.iitjeepritam.workers.dev/ws"
+            );
 
-            console.log("WS DATA:", data);
+            ws.onopen = () => {
+                reconnectAttempt = 0;
+                console.log("connected");
 
-            onUpdate(data);
+                heartbeatTimer = setInterval(() => {
+                    if (ws?.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: "ping" }));
+                    }
+                }, 10000);
+            };
+
+            ws.onmessage = event => {
+                const data = JSON.parse(event.data) as LiveUpdatePayload;
+
+                console.log("WS DATA:", data);
+
+                onUpdateRef.current(data);
+            };
+
+            ws.onerror = event => {
+                console.error("WebSocket error:", event);
+            };
+
+            ws.onclose = event => {
+                if (heartbeatTimer) clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+
+                console.log("closed", {
+                    code: event.code,
+                    reason: event.reason,
+                    wasClean: event.wasClean,
+                });
+
+                if (closedByReact) return;
+
+                const delay = Math.min(1000 * 2 ** reconnectAttempt, 15000);
+                reconnectAttempt += 1;
+
+                reconnectTimer = setTimeout(connect, delay);
+            };
         };
 
-        ws.onclose = () => {
-            console.log("closed");
-        };
+        connect();
 
-        return () => ws.close();
+        return () => {
+            closedByReact = true;
+            clearTimers();
+            ws?.close();
+        };
     }, []);
 }

@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Home, Trophy, Users, Layers, Settings } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { SettingsPanel } from '@/components/layout/SettingsPanel';
 
 interface NavItem {
@@ -32,6 +33,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 }) => {
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setSettingsOpen(false);
+  }, [pathname]);
 
   const activePage =
     currentPage ||
@@ -96,19 +101,31 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         </div>
       </nav>
 
-      {settingsOpen && (
-        <div
-          className="fixed left-0 right-0 top-[72px] z-40 bg-black/70 backdrop-blur-xl backdrop-saturate-150 md:hidden bottom-[77px]"
-          onClick={() => setSettingsOpen(false)}
-          role="presentation"
-        />
-      )}
+      <AnimatePresence>
+        {settingsOpen && (
+          <>
+            <motion.div
+              className="fixed bottom-[77px] left-0 right-0 top-[72px] z-40 bg-black/70 backdrop-blur-xl backdrop-saturate-150 md:hidden"
+              onClick={() => setSettingsOpen(false)}
+              role="presentation"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            />
 
-      {settingsOpen && (
-        <div className="fixed left-0 right-0 top-[72px] z-50 flex items-end px-3 pb-4 md:hidden bottom-[215px]">
-          <SettingsPanel className="w-full" onClose={() => setSettingsOpen(false)} />
-        </div>
-      )}
+            <motion.div
+              className="fixed bottom-[215px] left-0 right-0 top-[72px] z-50 flex items-end px-3 pb-4 md:hidden"
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 28 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <SettingsPanel className="w-full" onClose={() => setSettingsOpen(false)} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

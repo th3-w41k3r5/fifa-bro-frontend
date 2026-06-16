@@ -8,3 +8,8 @@ export { default as MatchStorylines } from './MatchStorylines';
 export { default as MatchBadges } from './MatchBadges';
 export { default as MatchDetails } from './MatchDetails';
 export { default as RelatedMatches } from './RelatedMatches';
+export { MatchGoalScorers } from './MatchGoalScorers';
+export { default as MatchCentreSection } from './MatchCentreSection';
+export { default as MatchTimeline } from './MatchTimeline';
+export { default as MatchLineups } from './MatchLineups';
+export { default as MatchCentreDetails } from './MatchCentreDetails';

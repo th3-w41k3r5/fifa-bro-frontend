@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { MatchSummary } from "@/types";
+import type { FifaMatchDetail, MatchSummary, MatchGoalScorers } from "@/types";
 
 export type LiveMatch = {
     matchId: string | number;
@@ -8,7 +8,23 @@ export type LiveMatch = {
     period?: string;
     homeScore?: number;
     awayScore?: number;
+    goalScorers?: MatchGoalScorers;
+    fifaDetail?: FifaMatchDetail | Record<string, unknown> | null;
 };
+
+function sanitizeLiveGoalScorers(
+    goalScorers: MatchGoalScorers,
+    homeScore?: number,
+    awayScore?: number
+): MatchGoalScorers {
+    const home = homeScore ?? 0;
+    const away = awayScore ?? 0;
+
+    return {
+        home: home > 0 ? goalScorers.home ?? [] : [],
+        away: away > 0 ? goalScorers.away ?? [] : [],
+    };
+}
 
 export type LiveUpdatePayload = {
     type: string;
@@ -31,25 +47,24 @@ export function applyLiveUpdateToMatches(
 
         if (!live) return match;
 
-        const updatedMatch = {
+        const goalScorers = sanitizeLiveGoalScorers(
+            live.goalScorers ?? { home: [], away: [] },
+            live.homeScore,
+            live.awayScore
+        );
+
+        return {
             ...match,
             status: "live",
             liveMinute: live.minute,
             livePeriod: live.period,
             homeScore: live.homeScore,
             awayScore: live.awayScore,
+            goalScorers,
+            ...(live.fifaDetail != null
+                ? { fifaDetail: live.fifaDetail as FifaMatchDetail }
+                : {}),
         };
-
-        console.log("LIVE MATCH STATE UPDATE:", {
-            id: updatedMatch.id,
-            status: updatedMatch.status,
-            liveMinute: updatedMatch.liveMinute,
-            livePeriod: updatedMatch.livePeriod,
-            homeScore: updatedMatch.homeScore,
-            awayScore: updatedMatch.awayScore,
-        });
-
-        return updatedMatch;
     });
 }
 
@@ -90,7 +105,6 @@ export function useLiveMatches(
 
             ws.onopen = () => {
                 reconnectAttempt = 0;
-                console.log("connected");
 
                 heartbeatTimer = setInterval(() => {
                     if (ws?.readyState === WebSocket.OPEN) {
@@ -101,9 +115,6 @@ export function useLiveMatches(
 
             ws.onmessage = event => {
                 const data = JSON.parse(event.data) as LiveUpdatePayload;
-
-                console.log("WS DATA:", data);
-
                 onUpdateRef.current(data);
             };
 
@@ -111,15 +122,9 @@ export function useLiveMatches(
                 console.error("WebSocket error:", event);
             };
 
-            ws.onclose = event => {
+            ws.onclose = () => {
                 if (heartbeatTimer) clearInterval(heartbeatTimer);
                 heartbeatTimer = null;
-
-                console.log("closed", {
-                    code: event.code,
-                    reason: event.reason,
-                    wasClean: event.wasClean,
-                });
 
                 if (closedByReact) return;
 

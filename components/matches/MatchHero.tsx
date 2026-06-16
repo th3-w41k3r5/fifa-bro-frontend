@@ -3,6 +3,7 @@
 import React from 'react';
 import { Badge, MatchSummary } from '@/types';
 import { Badge as FixtureBadge, TeamLogo } from '@/components';
+import { MatchGoalScorers } from './MatchGoalScorers';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { getMatchStatusLabel } from '@/lib/matchStatus';
 
@@ -36,6 +37,11 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
   const awayWon = hasScore && match.awayScore! > match.homeScore!;
   const statusLabel = getMatchStatusLabel(match);
 
+  // Show goal scorers only for live or complete matches
+  const homeGoals = match.goalScorers?.home ?? [];
+  const awayGoals = match.goalScorers?.away ?? [];
+
+
   return (
     <section className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#080b10] p-6 shadow-[0_28px_80px_rgba(0,0,0,0.30)] md:p-8 lg:p-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(0,183,255,0.16),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),transparent_48%)]" />
@@ -53,9 +59,15 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
             Match details, venue information, and editorial context for this FIFA World Cup 2026 fixture.
           </p>
 
-          <div className="mt-8 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-center gap-4 rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
-            <TeamBlock name={match.homeTeam} flagCode={match.homeFlagCode} label="Home" winner={homeWon} />
-            <div className="text-center">
+          <div className="mt-8 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-start gap-4 rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
+            <TeamBlock
+              name={match.homeTeam}
+              flagCode={match.homeFlagCode}
+              label="Home"
+              winner={homeWon}
+              goalScorers={homeGoals}
+            />
+            <div className="md:self-center text-center">
               {hasScore ? (
                 <div>
                   <p className="font-display text-4xl font-black text-accent md:text-4xl">
@@ -80,6 +92,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
               label="Away"
               align="right"
               winner={awayWon}
+              goalScorers={awayGoals}
             />
           </div>
         </div>
@@ -120,24 +133,35 @@ function TeamBlock({
   label,
   align = 'left',
   winner = false,
+  goalScorers,
 }: {
   name?: string;
   flagCode?: string;
   label: string;
   align?: 'left' | 'right';
   winner?: boolean;
+  goalScorers?: any[];
 }) {
+  const showGoalScorers = goalScorers && goalScorers.length > 0;
+
   return (
     <div className={`flex min-w-0 flex-col gap-3 ${align === 'right' ? 'items-end text-right' : 'items-start'}`}>
       <TeamLogo flagCode={flagCode || (name?.toLowerCase().slice(0, 2) ?? 'un')} teamName={name || 'TBD'} size="lg" />
       <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-text-secondary">{label}</p>
-      <p
-        className={`max-w-full truncate border-b-2 pb-1 text-xl font-black uppercase leading-none md:text-2xl ${
-          winner ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
-        }`}
-      >
-        {name || 'TBD'}
-      </p>
+      <div>
+        <p
+          className={`max-w-full truncate border-b-2 pb-1 text-xl font-black uppercase leading-none md:text-2xl ${
+            winner ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
+          }`}
+        >
+          {name || 'TBD'}
+        </p>
+        {showGoalScorers && (
+          <div className={align === 'right' ? 'text-right' : ''}>
+            <MatchGoalScorers goalScorers={goalScorers} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

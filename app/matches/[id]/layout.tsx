@@ -24,7 +24,7 @@ export async function generateMetadata(
     }
 
     const data = await response.json();
-    const match = data.data;
+    const match = data.data?.match ?? data.data;
 
     if (!match) {
       return {

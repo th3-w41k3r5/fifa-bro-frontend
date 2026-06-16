@@ -10,10 +10,10 @@ export function getMatchStatusLabel(match: MatchSummary): string {
   const status = match.status?.toLowerCase();
 
   if (isHalftimePeriod(match.livePeriod) || status === 'halftime' || status === 'half_time') {
-    return 'HT';
+    return 'Half Time';
   }
 
-  if (status === 'live' || status === 'in_progress') {
+  if (status === 'live' || status === 'playing' || status === 'in_progress') {
     return match.liveMinute !== undefined ? `LIVE ${match.liveMinute}'` : 'LIVE';
   }
 

@@ -6,6 +6,7 @@ import { PageContainer, LoadingState, EmptyState } from '@/components';
 import MatchHero from '@/components/matches/MatchHero';
 import MatchEditorial from '@/components/matches/MatchEditorial';
 import MatchDetails from '@/components/matches/MatchDetails';
+import MatchCentreSection from '@/components/matches/MatchCentreSection';
 import RelatedMatches from '@/components/matches/RelatedMatches';
 import { applyLiveUpdateToMatch, applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
@@ -28,7 +29,6 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Resolve params
   useEffect(() => {
     const resolveParams = async () => {
       const { id } = await params;
@@ -37,7 +37,6 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
     resolveParams();
   }, [params]);
 
-  // Fetch data when matchId is available
   useEffect(() => {
     const fetchData = async () => {
       if (!matchId) {
@@ -48,17 +47,14 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
       try {
         setLoading(true);
 
-        // Fetch match details
         const matchResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/matches/${matchId}`);
         if (!matchResponse.ok) throw new Error('Failed to fetch match');
         const matchData = await matchResponse.json();
 
-        // Fetch all matches for related matches
         const allMatchesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/matches`);
         if (!allMatchesResponse.ok) throw new Error('Failed to fetch matches');
         const allMatchesData = await allMatchesResponse.json();
 
-        // Backend returns { success: true, data: { match, storylines, badges } }
         const matchDataPayload = matchData.data || matchData;
 
         setData({
@@ -77,7 +73,6 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
     fetchData();
   }, [matchId]);
 
-  // Update document title
   useEffect(() => {
     if (data?.match) {
       document.title = `${data.match.homeTeam} vs ${data.match.awayTeam} | FIFA Bro`;
@@ -97,13 +92,37 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
     setAllMatches((previousMatches) => applyLiveUpdateToMatches(previousMatches, liveData));
   });
 
-  if (loading) return <LoadingState />;
-  if (error || !data)
-    return <EmptyState title="Match not found" description={error || 'Unable to load match details.'} />;
+  const match = data?.match;
+  const storylines = data?.storylines ?? [];
+  const badges = data?.badges ?? [];
+  const fifaDetail = match?.fifaDetail;
 
-  const { match, storylines } = data;
+  if (loading) {
+    return (
+      <PageContainer>
+        <LoadingState fullScreen />
+      </PageContainer>
+    );
+  }
 
-  // Get related matches (same group)
+  if (error) {
+    return (
+      <PageContainer>
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          {error}
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!match) {
+    return (
+      <PageContainer>
+        <EmptyState title="Match details are unavailable." variant="no-data" />
+      </PageContainer>
+    );
+  }
+
   const relatedMatches = match.groupCode
     ? allMatches.filter((m) => m.groupCode === match.groupCode && m.id !== match.id)
     : [];
@@ -111,10 +130,18 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
   return (
     <PageContainer>
       <div className="space-y-12">
-        {/* Hero Section */}
-        <MatchHero match={match} badges={data.badges} />
+        <MatchHero match={match} badges={badges} />
 
-        {/* Match Preview with Integrated Storylines */}
+        {fifaDetail && (
+          <MatchCentreSection
+            fifaDetail={fifaDetail}
+            homeTeamName={match.homeTeam}
+            awayTeamName={match.awayTeam}
+            homeFlagCode={match.homeFlagCode}
+            awayFlagCode={match.awayFlagCode}
+          />
+        )}
+
         {match.groupCode && (
           <MatchEditorial
             homeTeam={match.homeTeam}
@@ -125,10 +152,8 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
           />
         )}
 
-        {/* Match Details */}
         <MatchDetails match={match} />
 
-        {/* Related Matches */}
         {relatedMatches.length > 0 && match.groupCode && (
           <RelatedMatches matches={relatedMatches} groupCode={match.groupCode} />
         )}

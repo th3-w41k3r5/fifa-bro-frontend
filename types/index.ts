@@ -39,6 +39,121 @@ export interface Badge {
   color: string;
 }
 
+export interface GoalScorer {
+  minute: string;
+  playerName: string;
+  isPenalty: boolean;
+  isOwnGoal: boolean;
+}
+
+export interface MatchGoalScorers {
+  home: GoalScorer[];
+  away: GoalScorer[];
+}
+
+export interface FifaLocalizedField {
+  Locale?: string;
+  Description?: string;
+}
+
+export interface FifaPlayerPicture {
+  PictureUrl?: string;
+}
+
+export interface FifaPlayer {
+  IdPlayer: string;
+  ShirtNumber?: number;
+  Status?: number;
+  Position?: number;
+  Captain?: boolean;
+  PlayerName?: FifaLocalizedField[];
+  ShortName?: FifaLocalizedField[];
+  PlayerPicture?: FifaPlayerPicture;
+}
+
+export interface FifaCoach {
+  IdCoach?: string;
+  IdCountry?: string;
+  Name?: FifaLocalizedField[];
+  Role?: number;
+  PictureUrl?: string | null;
+}
+
+export interface FifaGoal {
+  Type?: number;
+  IdPlayer?: string;
+  IdAssistPlayer?: string | null;
+  Minute?: string;
+  EventMinute?: string;
+  EventMinuteRegulation?: string;
+  EventMinuteExtra?: string;
+  Period?: number;
+  IdTeam?: string;
+}
+
+export interface FifaBooking {
+  Card?: number;
+  Minute?: string;
+  IdPlayer?: string;
+  IdTeam?: string;
+}
+
+export interface FifaSubstitution {
+  PlayerOffName?: FifaLocalizedField[];
+  PlayerOnName?: FifaLocalizedField[];
+  IdPlayerOff?: string;
+  IdPlayerOn?: string;
+  Minute?: string;
+  Period?: number;
+  IdTeam?: string;
+}
+
+export interface FifaTeamDetail {
+  Score?: number;
+  Tactics?: string;
+  Coaches?: FifaCoach[];
+  Players?: FifaPlayer[];
+  Goals?: FifaGoal[];
+  Bookings?: FifaBooking[];
+  Substitutions?: FifaSubstitution[];
+  TeamName?: FifaLocalizedField[];
+}
+
+export interface FifaMatchDetail {
+  IdMatch?: string;
+  MatchNumber?: number;
+  Attendance?: string;
+  StageName?: FifaLocalizedField[];
+  GroupName?: FifaLocalizedField[];
+  Officials?: Array<{ OfficialType?: number; Name?: FifaLocalizedField[]; NameShort?: FifaLocalizedField[] }>;
+  Stadium?: {
+    Name?: FifaLocalizedField[];
+    CityName?: FifaLocalizedField[];
+    IdCountry?: string;
+  };
+  Weather?: {
+    Humidity?: string;
+    Temperature?: string;
+    WindSpeed?: string;
+    Type?: string;
+    TypeLocalized?: FifaLocalizedField[];
+  };
+  Date?: string;
+  LocalDate?: string;
+  MatchTime?: string;
+  Period?: number;
+  MatchStatus?: number;
+  ResultType?: number;
+  FirstHalfTime?: string | null;
+  SecondHalfTime?: string | null;
+  FirstHalfExtraTime?: string | null;
+  SecondHalfExtraTime?: string | null;
+  HomeTeamPenaltyScore?: number | null;
+  AwayTeamPenaltyScore?: number | null;
+  HomeTeam?: FifaTeamDetail;
+  AwayTeam?: FifaTeamDetail;
+}
+
 export interface MatchSummary {
   id: string | number;
   homeTeam: string;
@@ -60,6 +175,8 @@ export interface MatchSummary {
   storylines?: StorylineSummary[];
   liveMinute?: number;
   livePeriod?: string;
+  goalScorers?: MatchGoalScorers;
+  fifaDetail?: FifaMatchDetail;
 }
 
 export interface TeamSummary {

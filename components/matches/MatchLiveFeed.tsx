@@ -548,30 +548,38 @@ function MinorEventRow({
   return (
     <Reveal tier={4}>
       <div className={`mx-auto w-full ${FEED_MAX_W} border-b border-white/[0.08] px-1`}>
-        <div className="flex items-center gap-2 py-2.5">
+        {/* Main row */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 py-2.5">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center text-text-secondary/80">
             {icon}
           </span>
 
-          <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-text-secondary/90">
+          <span className="shrink-0 text-[12px] font-bold uppercase tracking-[0.08em] text-text-secondary/90">
             {label}
           </span>
 
-          <span className="text-[10px] text-white/20">·</span>
+          <span className="hidden text-[10px] text-white/20 sm:inline">·</span>
 
           {playerName && (
-            <span className="min-w-0 truncate text-[14px] font-bold text-text-primary">
+            <span className="min-w-0 break-words text-[14px] font-bold leading-snug text-text-primary sm:truncate sm:max-w-[180px]">
               {playerName}
             </span>
           )}
 
           <span className="flex-1" />
 
-          <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+          <div className="hidden sm:flex sm:items-center sm:gap-1.5">
+            <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+          </div>
 
           <span className="shrink-0 text-[13px] font-bold tabular-nums text-text-secondary/90">
             {minute}
           </span>
+        </div>
+
+        {/* Mobile team row — visible only on small screens */}
+        <div className="flex items-center gap-1.5 pb-2 pl-7 sm:hidden">
+          <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
         </div>
 
         {/* Commentary description */}

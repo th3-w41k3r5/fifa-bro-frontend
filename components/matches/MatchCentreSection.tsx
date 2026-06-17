@@ -66,6 +66,7 @@ export default function MatchCentreSection({
 
   useEffect(() => {
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     const fetchTimeline = async () => {
       if (!fifaMatchId) {
@@ -84,14 +85,17 @@ export default function MatchCentreSection({
         }
       } catch (error) {
         console.error('Failed to fetch FIFA timeline feed', error);
-        if (!cancelled) setTimelineApiEvents([]);
       }
     };
 
     fetchTimeline();
 
+    // Poll every 30s to keep the feed current during live matches
+    pollTimer = setInterval(fetchTimeline, 30_000);
+
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [fifaMatchId]);
 

@@ -4,6 +4,7 @@ import {
   FifaPlayer,
   FifaTeamDetail,
   FifaCoach,
+  FifaTimelineEvent,
 } from '@/types';
 
 export function getLocalizedText(field?: FifaLocalizedField[]): string {
@@ -180,6 +181,10 @@ export type MatchStateKind =
   | 'half_time'
   | 'second_half_start'
   | 'full_time'
+  | 'hydration_break'
+  | 'match_resumed'
+  | 'var_check'
+  | 'coin_toss'
   | 'extra_time_start'
   | 'extra_time_half_time'
   | 'extra_time_second_half_start'
@@ -190,22 +195,29 @@ export type TimelineEvent =
       id: string;
       minute: string;
       sortKey: number;
+      timestamp?: string;
       teamSide: 'home' | 'away';
       teamName: string;
       type: 'goal';
       playerName: string;
+      playerPictureUrl?: string;
       goalType: number;
       assistName?: string;
+      homeGoals?: number;
+      awayGoals?: number;
+      description?: string;
       priority: number;
     }
   | {
       id: string;
       minute: string;
       sortKey: number;
+      timestamp?: string;
       teamSide: 'home' | 'away';
       teamName: string;
       type: 'booking';
       playerName: string;
+      playerPictureUrl?: string;
       cardType: number;
       priority: number;
     }
@@ -213,42 +225,104 @@ export type TimelineEvent =
       id: string;
       minute: string;
       sortKey: number;
+      timestamp?: string;
       teamSide: 'home' | 'away';
       teamName: string;
       type: 'substitution';
       playerOff: string;
       playerOn: string;
+      playerOffPictureUrl?: string;
+      playerOnPictureUrl?: string;
       priority: number;
     }
   | {
       id: string;
       minute: string;
       sortKey: number;
+      timestamp?: string;
       type: 'match_state';
       stateKind: MatchStateKind;
       label: string;
+      description?: string;
+      priority: number;
+    }
+  | {
+      id: string;
+      minute: string;
+      sortKey: number;
+      timestamp?: string;
+      teamSide: 'home' | 'away';
+      teamName: string;
+      type: 'simple';
+      eventType: number;
+      label: string;
+      playerName?: string;
+      description?: string;
+      positionX?: number;
+      positionY?: number;
       priority: number;
     };
 
 const EVENT_PRIORITY = {
-  goal: 0,
-  penaltyGoal: 1,
-  ownGoal: 2,
-  redCard: 3,
-  yellowCard: 4,
-  substitution: 5,
-  matchState: 6,
+  varCheck: 1,
+  penaltyAwarded: 2,
+  attempt: 3,
+  goalPrevention: 4,
+  goal: 5,
+  yellowCard: 6,
+  redCard: 7,
+  substitution: 8,
+  foul: 9,
+  corner: 10,
+  matchState: 11,
+  simple: 12,
 } as const;
 
-function goalEventPriority(goalType?: number): number {
-  if (goalType === 1) return EVENT_PRIORITY.penaltyGoal;
-  if (goalType === 3) return EVENT_PRIORITY.ownGoal;
+function goalEventPriority(): number {
   return EVENT_PRIORITY.goal;
 }
 
 function isValidTimelineMinute(minute: string): boolean {
   const cleaned = minute.replace(/'/g, '').trim();
   return cleaned.length > 0;
+}
+
+function parseTimelineApiMinute(minute?: string): string {
+  if (!minute) return '';
+  const cleaned = minute.replace(/\s/g, '').replace(/'/g, '').trim();
+  if (!cleaned) return '';
+  const normalized = cleaned.replace(/^(\d+)\+(\d+)$/, "$1+$2");
+  return `${normalized}'`;
+}
+
+function compareTimelineEvents(a: TimelineEvent, b: TimelineEvent): number {
+  if (b.sortKey !== a.sortKey) return b.sortKey - a.sortKey;
+  return a.priority - b.priority;
+}
+
+export function sortTimelineEvents(events: TimelineEvent[]): TimelineEvent[] {
+  const sorted = [...events].sort(compareTimelineEvents);
+  
+  // Fill in missing running scores backwards (oldest to newest)
+  let currentHome = 0;
+  let currentAway = 0;
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const event = sorted[i];
+    if (event.type === 'goal') {
+      if (event.homeGoals != null && event.awayGoals != null) {
+        currentHome = event.homeGoals;
+        currentAway = event.awayGoals;
+      } else {
+        if (event.teamSide === 'home') currentHome++;
+        else if (event.teamSide === 'away') currentAway++;
+        
+        event.homeGoals = currentHome;
+        event.awayGoals = currentAway;
+      }
+    }
+  }
+  
+  return sorted;
 }
 
 function resolveStateMinute(value?: string | null, fallback?: string): string {
@@ -284,6 +358,7 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
     minute: string
   ) => {
     if (!minute) return;
+    const isVar = stateKind === 'var_check';
     events.push({
       id,
       minute,
@@ -291,7 +366,7 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
       type: 'match_state',
       stateKind,
       label,
-      priority: EVENT_PRIORITY.matchState,
+      priority: isVar ? EVENT_PRIORITY.varCheck : EVENT_PRIORITY.matchState,
     });
   };
 
@@ -368,13 +443,213 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
   return events;
 }
 
-function compareTimelineEvents(a: TimelineEvent, b: TimelineEvent): number {
-  if (b.sortKey !== a.sortKey) return b.sortKey - a.sortKey;
-  return a.priority - b.priority;
+function createEventId(prefix: string, source: Record<string, unknown>): string {
+  return `${prefix}-${String(source.EventId ?? source.Minute ?? source.IdPlayer ?? source.IdTeam ?? '')}-${String(source.IdPlayer ?? source.IdPlayerOff ?? source.IdPlayerOn ?? source.IdSubPlayer ?? '')}`;
 }
 
-function createEventId(prefix: string, source: Record<string, unknown>): string {
-  return `${prefix}-${String(source.Minute ?? source.IdPlayer ?? source.IdTeam ?? '')}-${String(source.IdPlayer ?? source.IdPlayerOff ?? source.IdPlayerOn ?? '')}`;
+function getTimelineText(field?: FifaLocalizedField[]): string {
+  return getLocalizedText(field).trim();
+}
+
+function resolveTimelineTeamSide(
+  event: FifaTimelineEvent,
+  homeTeamDetail: FifaTeamDetail,
+  awayTeamDetail: FifaTeamDetail
+): 'home' | 'away' | null {
+  const idTeam = event.IdTeam != null ? String(event.IdTeam) : '';
+  if (idTeam && homeTeamDetail.IdTeam != null && idTeam === String(homeTeamDetail.IdTeam)) return 'home';
+  if (idTeam && awayTeamDetail.IdTeam != null && idTeam === String(awayTeamDetail.IdTeam)) return 'away';
+  return null;
+}
+
+function stateKindFromTimelineEvent(event: FifaTimelineEvent): MatchStateKind | null {
+  const label = getTimelineText(event.TypeLocalized).toLowerCase();
+  const description = getTimelineText(event.EventDescription).toLowerCase();
+  const combined = `${label} ${description}`;
+
+  if (event.Type === 71 || /\bvar\b/.test(combined)) return 'var_check';
+  if (event.Type === 79 || event.Type === 80 || combined.includes('coin toss')) return 'coin_toss';
+  if (combined.includes('hydration')) return 'hydration_break';
+  if (combined.includes('resume')) return 'match_resumed';
+  if (event.Type === 26 || combined.includes('final whistle') || combined.includes('match end')) return 'full_time';
+  if (event.Type === 7 && combined.includes('second')) return 'second_half_start';
+  if (event.Type === 7) return 'match_start';
+  if (event.Type === 8 && (event.Period === 3 || combined.includes('first period'))) return 'half_time';
+  if (event.Type === 8) return 'full_time';
+  return null;
+}
+
+function stateLabel(kind: MatchStateKind): string {
+  const labels: Record<MatchStateKind, string> = {
+    match_start: 'Match Start',
+    half_time: 'Half Time',
+    second_half_start: 'Second Half Start',
+    full_time: 'Full Time',
+    hydration_break: 'Hydration Break',
+    match_resumed: 'Match Resumed',
+    var_check: 'VAR Check',
+    coin_toss: 'Coin Toss',
+    extra_time_start: 'Extra Time Start',
+    extra_time_half_time: 'Extra Time Half Time',
+    extra_time_second_half_start: 'Extra Time Second Half Start',
+    penalty_shootout_start: 'Penalty Shootout Start',
+  };
+  return labels[kind];
+}
+
+function isGoalTimelineEvent(event: FifaTimelineEvent): boolean {
+  return event.Type === 0 || event.Type === 34 || event.Type === 33;
+}
+
+function isPenaltyGoalTimelineEvent(event: FifaTimelineEvent): boolean {
+  return event.Type === 33;
+}
+
+function isOwnGoalTimelineEvent(event: FifaTimelineEvent): boolean {
+  return event.Type === 34;
+}
+
+function simpleTimelineEventLabel(event: FifaTimelineEvent): string | null {
+  const labels: Record<number, string> = {
+    12: 'Attempt at Goal',
+    18: 'Foul',
+    57: 'Goal Prevention',
+    16: 'Corner',
+    15: 'Offside',
+    83: 'Delay',
+    78: 'Resume',
+  };
+  return event.Type != null ? labels[event.Type] ?? null : null;
+}
+
+function simpleTimelineEventPriority(type?: number, label?: string): number {
+  const lower = label?.toLowerCase() || '';
+  if (lower.includes('penalty awarded')) return EVENT_PRIORITY.penaltyAwarded;
+  if (type === 12) return EVENT_PRIORITY.attempt;
+  if (type === 57) return EVENT_PRIORITY.goalPrevention;
+  if (type === 16) return EVENT_PRIORITY.corner;
+  if (type === 18) return EVENT_PRIORITY.foul;
+  return EVENT_PRIORITY.simple;
+}
+
+export function buildTimelineEventsFromApi(
+  fifaDetail: FifaMatchDetail,
+  homeTeamDetail: FifaTeamDetail,
+  awayTeamDetail: FifaTeamDetail,
+  apiEvents: FifaTimelineEvent[]
+): TimelineEvent[] {
+  const events: TimelineEvent[] = [];
+  const homeTeamName = getLocalizedText(fifaDetail.HomeTeam?.TeamName);
+  const awayTeamName = getLocalizedText(fifaDetail.AwayTeam?.TeamName);
+  const playerMap = buildPlayerMap([homeTeamDetail, awayTeamDetail]);
+
+  for (const event of apiEvents) {
+    const minute = parseTimelineApiMinute(event.MatchMinute);
+    const sortKey = parseTimelineSortKey(minute);
+    const stateKind = stateKindFromTimelineEvent(event);
+    const description = getTimelineText(event.EventDescription);
+
+    if (stateKind) {
+      events.push({
+        id: createEventId('timeline-state', event as Record<string, unknown>),
+        minute,
+        sortKey,
+        timestamp: event.Timestamp,
+        type: 'match_state',
+        stateKind,
+        label: stateLabel(stateKind),
+        description,
+        priority: stateKind === 'var_check' ? EVENT_PRIORITY.varCheck : EVENT_PRIORITY.matchState,
+      });
+      continue;
+    }
+
+    const side = resolveTimelineTeamSide(event, homeTeamDetail, awayTeamDetail);
+    if (!side) continue;
+
+    const teamName = side === 'home' ? homeTeamName : awayTeamName;
+    const player = event.IdPlayer ? playerMap.get(String(event.IdPlayer)) : undefined;
+
+    if (isGoalTimelineEvent(event)) {
+      const goalType = isOwnGoalTimelineEvent(event) ? 34 : isPenaltyGoalTimelineEvent(event) ? 33 : 0;
+      events.push({
+        id: createEventId('timeline-goal', event as Record<string, unknown>),
+        minute,
+        sortKey,
+        timestamp: event.Timestamp,
+        type: 'goal',
+        teamSide: side,
+        teamName,
+        playerName: getPlayerDisplayName(player),
+        playerPictureUrl: getPlayerPictureUrl(player),
+        goalType,
+        homeGoals: event.HomeGoals,
+        awayGoals: event.AwayGoals,
+        description,
+        priority: goalEventPriority(),
+      });
+      continue;
+    }
+
+    if (event.Type === 2 || event.Type === 3) {
+      events.push({
+        id: createEventId('timeline-booking', event as Record<string, unknown>),
+        minute,
+        sortKey,
+        timestamp: event.Timestamp,
+        type: 'booking',
+        teamSide: side,
+        teamName,
+        playerName: getPlayerDisplayName(player),
+        playerPictureUrl: getPlayerPictureUrl(player),
+        cardType: event.Type === 3 ? 2 : 1,
+        priority: event.Type === 3 ? EVENT_PRIORITY.redCard : EVENT_PRIORITY.yellowCard,
+      });
+      continue;
+    }
+
+    if (event.Type === 5) {
+      const playerOn = event.IdPlayer ? playerMap.get(String(event.IdPlayer)) : undefined;
+      const playerOff = event.IdSubPlayer ? playerMap.get(String(event.IdSubPlayer)) : undefined;
+      events.push({
+        id: createEventId('timeline-sub', event as Record<string, unknown>),
+        minute,
+        sortKey,
+        timestamp: event.Timestamp,
+        type: 'substitution',
+        teamSide: side,
+        teamName,
+        playerOn: getPlayerDisplayName(playerOn),
+        playerOff: getPlayerDisplayName(playerOff),
+        playerOnPictureUrl: getPlayerPictureUrl(playerOn),
+        playerOffPictureUrl: getPlayerPictureUrl(playerOff),
+        priority: EVENT_PRIORITY.substitution,
+      });
+      continue;
+    }
+
+    const simpleLabel = simpleTimelineEventLabel(event);
+    if (simpleLabel) {
+      events.push({
+        id: createEventId('timeline-simple', event as Record<string, unknown>),
+        minute,
+        sortKey,
+        timestamp: event.Timestamp,
+        type: 'simple',
+        eventType: event.Type ?? -1,
+        teamSide: side,
+        teamName,
+        label: simpleLabel,
+        playerName: player ? getPlayerDisplayName(player) : undefined,
+        description,
+        positionX: event.PositionX,
+        positionY: event.PositionY,
+        priority: simpleTimelineEventPriority(event.Type, simpleLabel),
+      });
+    }
+  }
+
+  return sortTimelineEvents(events);
 }
 
 export function buildTimelineEvents(
@@ -406,9 +681,10 @@ export function buildTimelineEvents(
         teamSide: side,
         teamName,
         playerName: scorer ? getPlayerDisplayName(scorer) : 'Unknown player',
+        playerPictureUrl: getPlayerPictureUrl(scorer),
         goalType: goal.Type ?? 0,
         assistName: assist ? getPlayerDisplayName(assist) : undefined,
-        priority: goalEventPriority(goal.Type),
+        priority: goalEventPriority(),
       });
     }
   };
@@ -428,6 +704,7 @@ export function buildTimelineEvents(
         teamSide: side,
         teamName,
         playerName: player ? getPlayerDisplayName(player) : 'Unknown player',
+        playerPictureUrl: getPlayerPictureUrl(player),
         cardType: booking.Card ?? 0,
         priority: booking.Card === 2 ? EVENT_PRIORITY.redCard : EVENT_PRIORITY.yellowCard,
       });
@@ -446,6 +723,8 @@ export function buildTimelineEvents(
       const playerOn =
         getLocalizedText(sub.PlayerOnName) ||
         (sub.IdPlayerOn ? getPlayerDisplayName(playerMap.get(String(sub.IdPlayerOn))) : 'Unknown');
+      const playerOffRecord = sub.IdPlayerOff ? playerMap.get(String(sub.IdPlayerOff)) : undefined;
+      const playerOnRecord = sub.IdPlayerOn ? playerMap.get(String(sub.IdPlayerOn)) : undefined;
       events.push({
         id: createEventId('sub', sub as Record<string, unknown>),
         minute,
@@ -455,6 +734,8 @@ export function buildTimelineEvents(
         teamName,
         playerOff,
         playerOn,
+        playerOffPictureUrl: getPlayerPictureUrl(playerOffRecord),
+        playerOnPictureUrl: getPlayerPictureUrl(playerOnRecord),
         priority: EVENT_PRIORITY.substitution,
       });
     }
@@ -468,7 +749,7 @@ export function buildTimelineEvents(
   pushSubstitutionEvents(awayTeamDetail, 'away');
   events.push(...buildMatchStateEvents(fifaDetail));
 
-  return events.sort(compareTimelineEvents);
+  return sortTimelineEvents(events);
 }
 
 export function splitPlayersByStatus(players: FifaPlayer[] = []) {

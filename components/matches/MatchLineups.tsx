@@ -69,7 +69,7 @@ function TeamHeader({
       </div>
 
       <div className="mt-4 flex min-w-0 items-center gap-3 border-t border-white/[0.06] pt-4">
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/20 bg-[#F8F8FF] sm:h-14 sm:w-14">
+        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/20 bg-[#F8F8FF]/[0.5] sm:h-14 sm:w-14">
           {coachPictureUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

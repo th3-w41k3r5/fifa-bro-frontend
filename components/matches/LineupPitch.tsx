@@ -58,20 +58,25 @@ function PositionRow({
 
 export default function LineupPitch({ starters, playerEvents, inverted = false }: LineupPitchProps) {
   const { gk, def, mid, fwd } = groupPlayersByPosition(starters);
-  const rows = inverted ? [fwd, mid, def, gk] : [gk, def, mid, fwd];
+  const rows = [gk, def, mid, fwd];
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden">
       <div
         className="relative w-full overflow-hidden rounded-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_40px_rgba(0,0,0,0.28)]"
         style={{
-          background:
-            'linear-gradient(180deg, #1a5c38 0%, #124a2e 38%, #0c3822 72%, #082818 100%)',
+          background: inverted
+            ? 'linear-gradient(0deg, #1a5c38 0%, #124a2e 38%, #0c3822 72%, #082818 100%)'
+            : 'linear-gradient(180deg, #1a5c38 0%, #124a2e 38%, #0c3822 72%, #082818 100%)',
         }}
       >
         <PitchMarkings />
 
-        <div className="relative z-10 flex min-h-[320px] flex-col justify-between gap-1 py-4 sm:min-h-[380px] sm:gap-2 sm:py-5 md:min-h-[440px] md:py-6">
+        <div
+          className={`relative z-10 flex min-h-[320px] justify-between gap-1 py-4 sm:min-h-[380px] sm:gap-2 sm:py-5 md:min-h-[440px] md:py-6 ${
+            inverted ? 'flex-col-reverse' : 'flex-col'
+          }`}
+        >
           {rows.map((players, index) => (
             <PositionRow key={index} players={players} playerEvents={playerEvents} />
           ))}

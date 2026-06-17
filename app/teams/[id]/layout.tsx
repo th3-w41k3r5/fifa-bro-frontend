@@ -51,7 +51,7 @@ export async function generateMetadata(
         description,
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Team Details | FIFA Bro',
       description: 'View FIFA World Cup 2026 team information.',

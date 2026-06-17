@@ -1,4 +1,5 @@
 import React from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { AlertCircle, Search } from 'lucide-react';
 
 type EmptyStateVariant = 'search' | 'error' | 'no-data';
@@ -16,7 +17,7 @@ interface EmptyStateProps {
   variant?: EmptyStateVariant;
 }
 
-const variantDefaults: Record<EmptyStateVariant, { icon: React.ComponentType<any>; title: string }> = {
+const variantDefaults: Record<EmptyStateVariant, { icon: LucideIcon; title: string }> = {
   search: {
     icon: Search,
     title: 'No results found',

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Badge, MatchSummary } from '@/types';
+import { Badge, GoalScorer, MatchSummary } from '@/types';
 import { Badge as FixtureBadge, TeamLogo } from '@/components';
 import { MatchGoalScorers } from './MatchGoalScorers';
 import { Calendar, Clock, MapPin } from 'lucide-react';
@@ -140,7 +140,7 @@ function TeamBlock({
   label: string;
   align?: 'left' | 'right';
   winner?: boolean;
-  goalScorers?: any[];
+  goalScorers?: GoalScorer[];
 }) {
   const showGoalScorers = goalScorers && goalScorers.length > 0;
 

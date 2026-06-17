@@ -1,4 +1,5 @@
 import React from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { Flag, Star, Flame, Skull, Target } from 'lucide-react';
 
 type BadgeVariant = 'opening-match' | 'must-watch' | 'featured' | 'group-of-death' | 'revenge-match';
@@ -11,7 +12,7 @@ interface BadgeProps {
 }
 
 interface BadgeConfig {
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   bgClass: string;
   textClass: string;
 }

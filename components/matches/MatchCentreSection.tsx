@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FifaMatchDetail } from '@/types';
-import { buildPlayerMap, buildTimelineEvents } from '@/lib/fifaMatchUtils';
+import { FifaMatchDetail, FifaTimelineEvent } from '@/types';
+import {
+  buildPlayerMap,
+  buildTimelineEvents,
+  buildTimelineEventsFromApi,
+  sortTimelineEvents,
+} from '@/lib/fifaMatchUtils';
 import MatchCentreTabs, { MatchCentreTab } from './MatchCentreTabs';
+import MatchLiveFeed from './MatchLiveFeed';
 import MatchTimeline from './MatchTimeline';
 import MatchLineups from './MatchLineups';
 import MatchCentreDetails from './MatchCentreDetails';
+import type { TimelineEvent } from '@/lib/fifaMatchUtils';
 
 interface MatchCentreSectionProps {
   fifaDetail: FifaMatchDetail;
@@ -17,6 +24,22 @@ interface MatchCentreSectionProps {
   awayFlagCode?: string;
 }
 
+function getFeedEventMergeKey(event: TimelineEvent): string {
+  const actor =
+    event.type === 'goal' || event.type === 'booking'
+      ? event.playerName
+      : event.type === 'substitution'
+        ? `${event.playerOn}-${event.playerOff}`
+        : event.label;
+
+  return [
+    event.type,
+    event.minute,
+    'teamSide' in event ? event.teamSide : '',
+    actor,
+  ].join('|');
+}
+
 export default function MatchCentreSection({
   fifaDetail,
   homeTeamName,
@@ -24,10 +47,12 @@ export default function MatchCentreSection({
   homeFlagCode,
   awayFlagCode,
 }: MatchCentreSectionProps) {
-  const [activeSection, setActiveSection] = useState<MatchCentreTab>('timeline');
+  const [activeSection, setActiveSection] = useState<MatchCentreTab>('live-feed');
+  const [timelineApiEvents, setTimelineApiEvents] = useState<FifaTimelineEvent[]>([]);
 
   const homeTeamDetail = fifaDetail.HomeTeam;
   const awayTeamDetail = fifaDetail.AwayTeam;
+  const fifaMatchId = fifaDetail.IdMatch;
 
   const playerMap = useMemo(
     () => buildPlayerMap([homeTeamDetail ?? {}, awayTeamDetail ?? {}]),
@@ -39,7 +64,66 @@ export default function MatchCentreSection({
     return buildTimelineEvents(fifaDetail, homeTeamDetail, awayTeamDetail, playerMap);
   }, [fifaDetail, homeTeamDetail, awayTeamDetail, playerMap]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTimeline = async () => {
+      if (!fifaMatchId) {
+        setTimelineApiEvents([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `https://api.fifa.com/api/v3/timelines/${fifaMatchId}?language=en`
+        );
+        if (!response.ok) throw new Error(`FIFA timeline request failed: ${response.status}`);
+        const data = (await response.json()) as { Event?: FifaTimelineEvent[] };
+        if (!cancelled) {
+          setTimelineApiEvents(Array.isArray(data.Event) ? data.Event : []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch FIFA timeline feed', error);
+        if (!cancelled) setTimelineApiEvents([]);
+      }
+    };
+
+    fetchTimeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fifaMatchId]);
+
+  const liveFeedEvents = useMemo(() => {
+    if (!homeTeamDetail || !awayTeamDetail) return [];
+    if (timelineApiEvents.length > 0) {
+      const apiFeed = buildTimelineEventsFromApi(
+        fifaDetail,
+        homeTeamDetail,
+        awayTeamDetail,
+        timelineApiEvents
+      );
+      const seen = new Set(apiFeed.map(getFeedEventMergeKey));
+      const websocketOnlyEvents = timelineEvents.filter((event) => {
+        return !seen.has(getFeedEventMergeKey(event));
+      });
+      return sortTimelineEvents([...apiFeed, ...websocketOnlyEvents]);
+    }
+    return timelineEvents;
+  }, [fifaDetail, homeTeamDetail, awayTeamDetail, timelineApiEvents, timelineEvents]);
+
   const sectionContent = () => {
+    if (activeSection === 'live-feed') {
+      return (
+        <MatchLiveFeed
+          events={liveFeedEvents}
+          homeFlagCode={homeFlagCode}
+          awayFlagCode={awayFlagCode}
+        />
+      );
+    }
+
     if (activeSection === 'timeline') {
       return (
         <MatchTimeline

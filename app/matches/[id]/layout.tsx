@@ -55,7 +55,7 @@ export async function generateMetadata(
         description,
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Match Details | FIFA Bro',
       description: 'View detailed FIFA World Cup 2026 match information.',

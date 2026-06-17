@@ -127,7 +127,7 @@ export default function PitchPlayerMarker({ player, events, compact = false }: P
     <div className={`flex shrink-0 flex-col items-center ${widthClass}`}>
       <div className="relative">
         <div
-          className={`${avatarSize} overflow-hidden rounded-full border-2 border-white/20 bg-[#F8F8FF] shadow-[0_4px_14px_rgba(0,0,0,0.35)]`}
+          className={`${avatarSize} overflow-hidden rounded-full border-2 border-white/20 bg-[#F8F8FF]/[0.5] shadow-[0_4px_14px_rgba(0,0,0,0.35)]`}
         >
           {pictureUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

@@ -109,6 +109,7 @@ export interface FifaSubstitution {
 }
 
 export interface FifaTeamDetail {
+  IdTeam?: string;
   Score?: number;
   Tactics?: string;
   Coaches?: FifaCoach[];
@@ -117,6 +118,27 @@ export interface FifaTeamDetail {
   Bookings?: FifaBooking[];
   Substitutions?: FifaSubstitution[];
   TeamName?: FifaLocalizedField[];
+}
+
+export interface FifaTimelineEvent {
+  EventId?: string;
+  IdTeam?: string;
+  IdPlayer?: string;
+  IdSubPlayer?: string;
+  IdSubTeam?: string;
+  Timestamp?: string;
+  MatchMinute?: string;
+  Period?: number;
+  HomeGoals?: number;
+  AwayGoals?: number;
+  Type?: number;
+  TypeLocalized?: FifaLocalizedField[];
+  EventDescription?: FifaLocalizedField[];
+  PositionX?: number;
+  PositionY?: number;
+  GoalGatePositionX?: number;
+  GoalGatePositionY?: number;
+  VarNotificationData?: unknown;
 }
 
 export interface FifaMatchDetail {

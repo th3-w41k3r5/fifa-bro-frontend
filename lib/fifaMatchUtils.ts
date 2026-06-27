@@ -383,7 +383,7 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
     'state-half-time',
     'half_time',
     'Half Time',
-    resolveStateMinute(fifaDetail.FirstHalfTime)
+    resolveStateMinute(fifaDetail.FirstHalfTime, "45'")
   );
 
   if (isSecondHalfAvailable) {
@@ -391,7 +391,7 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
       'state-second-half-start',
       'second_half_start',
       'Second Half Start',
-      resolveStateMinute(fifaDetail.SecondHalfTime)
+      resolveStateMinute(fifaDetail.SecondHalfTime, "46'")
     );
   }
 
@@ -472,7 +472,7 @@ function stateKindFromTimelineEvent(event: FifaTimelineEvent): MatchStateKind | 
   if (combined.includes('hydration')) return 'hydration_break';
   if (combined.includes('resume')) return 'match_resumed';
   if (event.Type === 26 || combined.includes('final whistle') || combined.includes('match end')) return 'full_time';
-  if (event.Type === 7 && combined.includes('second')) return 'second_half_start';
+  if (event.Type === 7 && (event.Period === 5 || combined.includes('second'))) return 'second_half_start';
   if (event.Type === 7) return 'match_start';
   if (event.Type === 8 && (event.Period === 3 || combined.includes('first period'))) return 'half_time';
   if (event.Type === 8) return 'full_time';
@@ -498,11 +498,11 @@ function stateLabel(kind: MatchStateKind): string {
 }
 
 function isGoalTimelineEvent(event: FifaTimelineEvent): boolean {
-  return event.Type === 0 || event.Type === 34 || event.Type === 33;
+  return event.Type === 0 || event.Type === 34 || event.Type === 33 || event.Type === 41;
 }
 
 function isPenaltyGoalTimelineEvent(event: FifaTimelineEvent): boolean {
-  return event.Type === 33;
+  return event.Type === 33 || event.Type === 41;
 }
 
 function isOwnGoalTimelineEvent(event: FifaTimelineEvent): boolean {
@@ -518,17 +518,20 @@ function simpleTimelineEventLabel(event: FifaTimelineEvent): string | null {
     15: 'Offside',
     83: 'Delay',
     78: 'Resume',
+    6: 'Penalty Awarded',
+    1: 'Assist',
   };
   return event.Type != null ? labels[event.Type] ?? null : null;
 }
 
 function simpleTimelineEventPriority(type?: number, label?: string): number {
   const lower = label?.toLowerCase() || '';
-  if (lower.includes('penalty awarded')) return EVENT_PRIORITY.penaltyAwarded;
+  if (lower.includes('penalty awarded') || type === 6) return EVENT_PRIORITY.penaltyAwarded;
   if (type === 12) return EVENT_PRIORITY.attempt;
   if (type === 57) return EVENT_PRIORITY.goalPrevention;
   if (type === 16) return EVENT_PRIORITY.corner;
   if (type === 18) return EVENT_PRIORITY.foul;
+  if (type === 1) return EVENT_PRIORITY.goal; // Assist shown near its goal
   return EVENT_PRIORITY.simple;
 }
 
@@ -538,7 +541,7 @@ export function buildTimelineEventsFromApi(
   awayTeamDetail: FifaTeamDetail,
   apiEvents: FifaTimelineEvent[]
 ): TimelineEvent[] {
-  const events: TimelineEvent[] = [];
+  let events: TimelineEvent[] = [];
   const homeTeamName = getLocalizedText(fifaDetail.HomeTeam?.TeamName);
   const awayTeamName = getLocalizedText(fifaDetail.AwayTeam?.TeamName);
   const playerMap = buildPlayerMap([homeTeamDetail, awayTeamDetail]);
@@ -550,10 +553,19 @@ export function buildTimelineEventsFromApi(
     const description = getTimelineText(event.EventDescription);
 
     if (stateKind) {
+      let finalMinute = minute;
+      let finalSortKey = sortKey;
+      
+      // Ensure Second Half Start always sorts above First Half stoppage time
+      if (stateKind === 'second_half_start' && finalSortKey < 4600) {
+        finalMinute = "46'";
+        finalSortKey = 4600;
+      }
+
       events.push({
         id: createEventId('timeline-state', event as Record<string, unknown>),
-        minute,
-        sortKey,
+        minute: finalMinute,
+        sortKey: finalSortKey,
         timestamp: event.Timestamp,
         type: 'match_state',
         stateKind,
@@ -647,6 +659,22 @@ export function buildTimelineEventsFromApi(
         priority: simpleTimelineEventPriority(event.Type, simpleLabel),
       });
     }
+  }
+
+  // Deduplicate FULL TIME events: API can send multiple full time events (e.g. Type 8 and Type 26)
+  // We want to keep the one that uses a relative stoppage time minute (e.g., "90'+9'")
+  // rather than an absolute minute (e.g., "99'") if both exist.
+  const fullTimeEvents = events.filter(e => e.type === 'match_state' && e.stateKind === 'full_time');
+  if (fullTimeEvents.length > 1) {
+    // Sort so that events with '+' in the minute come first. If neither or both have '+', fallback to sortKey descending
+    const sortedFullTime = [...fullTimeEvents].sort((a, b) => {
+      const aHasPlus = a.minute.includes('+') ? 1 : 0;
+      const bHasPlus = b.minute.includes('+') ? 1 : 0;
+      if (aHasPlus !== bHasPlus) return bHasPlus - aHasPlus;
+      return b.sortKey - a.sortKey;
+    });
+    const toKeep = sortedFullTime[0];
+    events = events.filter(e => !(e.type === 'match_state' && e.stateKind === 'full_time' && e.id !== toKeep.id));
   }
 
   return sortTimelineEvents(events);

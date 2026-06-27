@@ -66,6 +66,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
               label="Home"
               winner={homeWon}
               goalScorers={homeGoals}
+              qualificationStatus={match.homeQualificationStatus}
             />
             <div className="md:self-center text-center">
               {hasScore ? (
@@ -93,6 +94,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
               align="right"
               winner={awayWon}
               goalScorers={awayGoals}
+              qualificationStatus={match.awayQualificationStatus}
             />
           </div>
         </div>
@@ -134,6 +136,7 @@ function TeamBlock({
   align = 'left',
   winner = false,
   goalScorers,
+  qualificationStatus,
 }: {
   name?: string;
   flagCode?: string;
@@ -141,6 +144,7 @@ function TeamBlock({
   align?: 'left' | 'right';
   winner?: boolean;
   goalScorers?: GoalScorer[];
+  qualificationStatus?: string;
 }) {
   const showGoalScorers = goalScorers && goalScorers.length > 0;
 
@@ -156,6 +160,13 @@ function TeamBlock({
         >
           {name || 'TBD'}
         </p>
+        {qualificationStatus === 'CouldQualify' && (
+          <div className={`mt-1.5 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+            <span className="inline-block rounded bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
+              Provisional
+            </span>
+          </div>
+        )}
         {showGoalScorers && (
           <div className={align === 'right' ? 'text-right' : ''}>
             <MatchGoalScorers goalScorers={goalScorers} />

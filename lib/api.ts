@@ -1,4 +1,4 @@
-import type { MatchSummary, FeaturedMatch, StorylineSummary, GroupSummary, HomePayload, StandingGroup } from '@/types';
+import type { MatchSummary, FeaturedMatch, StorylineSummary, GroupSummary, HomePayload, StandingGroup, ThirdPlaceRankingsPayload } from '@/types';
 
 /**
  * Type-safe API client for FIFA Bro backend
@@ -101,4 +101,40 @@ export async function getGroupDetail(groupCode: string) {
  */
 export async function getMatchDetail(matchId: string | number) {
   return fetchAPI(`/matches/${matchId}`);
+}
+
+/**
+ * Get third-place rankings
+ */
+export async function getThirdPlaceRankings(): Promise<ThirdPlaceRankingsPayload> {
+  const endpoint = '/third-place-rankings';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      signal: controller.signal,
+      next: { revalidate: 60 },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    console.log('Third Place API Response', response);
+    console.log('Third Place API JSON', data);
+
+    // Endpoint directly returns the payload, no { success, data } wrapper
+    return data as ThirdPlaceRankingsPayload;
+  } catch (error: any) {
+    console.error('Third Place API Error:', error);
+    throw new Error(error.message || 'Failed to fetch third place rankings');
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

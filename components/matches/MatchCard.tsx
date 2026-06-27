@@ -54,13 +54,20 @@ export default function MatchCard({ match }: MatchCardProps) {
                 teamName={match.homeTeam || 'TBD'}
                 size="sm"
               />
-              <span
-                className={`truncate border-b-2 pb-1 text-sm font-extrabold md:text-base ${
-                  homeWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
-                }`}
-              >
-                {match.homeTeam || 'TBD'}
-              </span>
+              <div className="flex flex-col items-start gap-1">
+                <span
+                  className={`truncate border-b-2 pb-1 text-sm font-extrabold md:text-base ${
+                    homeWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
+                  }`}
+                >
+                  {match.homeTeam || 'TBD'}
+                </span>
+                {match.homeQualificationStatus === 'CouldQualify' && (
+                  <span className="rounded bg-yellow-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
+                    Provisional
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="text-center">
@@ -79,13 +86,20 @@ export default function MatchCard({ match }: MatchCardProps) {
                 teamName={match.awayTeam}
                 size="sm"
               />
-              <span
-                className={`truncate border-b-2 pb-1 text-sm font-extrabold md:text-base ${
-                  awayWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
-                }`}
-              >
-                {match.awayTeam}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span
+                  className={`truncate border-b-2 pb-1 text-sm font-extrabold md:text-base ${
+                    awayWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
+                  }`}
+                >
+                  {match.awayTeam}
+                </span>
+                {match.awayQualificationStatus === 'CouldQualify' && (
+                  <span className="rounded bg-yellow-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
+                    Provisional
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

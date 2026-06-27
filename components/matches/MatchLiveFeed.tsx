@@ -16,6 +16,8 @@ import {
   UserRound,
   Video,
   Zap,
+  Target,
+  ArrowUpRight,
 } from 'lucide-react';
 import { TeamLogo } from '@/components';
 import { TimelineEvent } from '@/lib/fifaMatchUtils';
@@ -143,7 +145,7 @@ function PlayerImage({ src, name, size = 'md' }: { src?: string; name: string; s
           className={
             size === 'hero'
               ? 'h-full w-full scale-[3] translate-y-[60px] md:translate-y-[75px] translate-x-[-2px] object-cover object-top'
-              : 'h-full w-full scale-[3] translate-y-[20px] md:translate-y-[23px] translate-x-[-2px object-cover object-top'
+              : 'h-full w-full scale-[3] translate-y-[20px] md:translate-y-[23px] translate-x-[-2px] object-cover object-top'
           }
           style={{ objectPosition: 'center top' }}
           loading="lazy"
@@ -352,18 +354,23 @@ function YellowCardCard({ event, homeFlagCode, awayFlagCode }: { event: BookingE
   return (
     <Reveal tier={3}>
       <article className={`mx-auto w-full ${FEED_MAX_W} rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-2.5`}>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
           <span
-            className="block h-7 shrink-0 rounded-[2px] bg-warning shadow-[0_0_10px_rgba(245,158,11,0.2)]"
-            style={{ width: '18px' }}
+            className="block h-7 w-[18px] shrink-0 rounded-[2px] bg-warning shadow-[0_0_10px_rgba(245,158,11,0.2)]"
             aria-hidden
           />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-[120px]">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-warning">Yellow Card</p>
-            <p className="truncate text-[14px] font-bold text-text-primary">{event.playerName}</p>
+            <p className="break-words text-[14px] font-bold leading-snug text-text-primary">{event.playerName}</p>
           </div>
-          <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+          <div className="hidden sm:flex sm:items-center sm:gap-1.5">
+            <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+          </div>
           <MinuteBadge minute={event.minute} />
+        </div>
+        {/* Mobile team row */}
+        <div className="flex items-center gap-1.5 pt-1.5 pl-[30px] sm:hidden">
+          <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
         </div>
       </article>
     </Reveal>
@@ -461,17 +468,23 @@ function AttemptCard({ event, homeFlagCode, awayFlagCode }: { event: SimpleEvent
             )}
 
             {/* Player · Team · Minute — supporting metadata */}
-            <div className="mt-2.5 flex items-center gap-1.5 opacity-80">
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 opacity-80">
               {event.playerName && (
                 <>
-                  <span className="truncate text-[12px] font-bold text-text-secondary">{event.playerName}</span>
-                  <span className="text-[10px] text-white/20">·</span>
+                  <span className="min-w-0 break-words text-[12px] font-bold leading-snug text-text-secondary sm:truncate sm:max-w-[200px]">{event.playerName}</span>
+                  <span className="hidden text-[10px] text-white/20 sm:inline">·</span>
                 </>
               )}
-              <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+              <div className="hidden sm:flex sm:items-center sm:gap-1.5">
+                <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+              </div>
               <span className="ml-auto">
                 <MinuteBadge minute={event.minute} />
               </span>
+            </div>
+            {/* Mobile team row */}
+            <div className="mt-1 flex items-center gap-1.5 opacity-80 sm:hidden">
+              <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
             </div>
           </div>
         </div>
@@ -502,17 +515,23 @@ function GoalPreventionCard({ event, homeFlagCode, awayFlagCode }: { event: Simp
               <p className="mt-1 text-[16px] font-medium leading-[1.55] text-white/95">{event.description}</p>
             )}
             {/* Player + team as metadata */}
-            <div className="mt-2.5 flex items-center gap-1.5 opacity-80">
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 opacity-80">
               {event.playerName && (
                 <>
-                  <span className="truncate text-[12px] font-bold text-text-secondary">{event.playerName}</span>
-                  <span className="text-[10px] text-white/20">·</span>
+                  <span className="min-w-0 break-words text-[12px] font-bold leading-snug text-text-secondary sm:truncate sm:max-w-[200px]">{event.playerName}</span>
+                  <span className="hidden text-[10px] text-white/20 sm:inline">·</span>
                 </>
               )}
-              <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+              <div className="hidden sm:flex sm:items-center sm:gap-1.5">
+                <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
+              </div>
               <span className="ml-auto">
                 <MinuteBadge minute={event.minute} variant="emerald" />
               </span>
+            </div>
+            {/* Mobile team row */}
+            <div className="mt-1 flex items-center gap-1.5 opacity-80 sm:hidden">
+              <TeamFlag event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />
             </div>
           </div>
         </div>
@@ -787,6 +806,30 @@ function SimpleEventRenderer({ event, homeFlagCode, awayFlagCode }: { event: Sim
   if (event.eventType === 16) return <CornerRow event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
   if (event.eventType === 15) return <OffsideRow event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
   if (event.eventType === 83 || event.eventType === 78) return <BreakCard event={event} />;
+  if (event.eventType === 6) return (
+    <MinorEventRow
+      icon={<Target className="h-4 w-4" />}
+      label="Penalty Awarded"
+      playerName={event.playerName}
+      description={event.description}
+      minute={event.minute}
+      event={event}
+      homeFlagCode={homeFlagCode}
+      awayFlagCode={awayFlagCode}
+    />
+  );
+  if (event.eventType === 1) return (
+    <MinorEventRow
+      icon={<ArrowUpRight className="h-4 w-4" />}
+      label="Assist"
+      playerName={event.playerName}
+      description={event.description}
+      minute={event.minute}
+      event={event}
+      homeFlagCode={homeFlagCode}
+      awayFlagCode={awayFlagCode}
+    />
+  );
   return <ContextStateCard event={{ ...event, type: 'match_state', stateKind: 'match_resumed', priority: event.priority }} />;
 }
 
@@ -814,7 +857,9 @@ function getEventTier(event: TimelineEvent): 1 | 2 | 3 | 4 | 5 {
   if (event.type === 'simple') {
     if (event.eventType === 57) return 2;
     if (event.eventType === 12) return 3;
+    if (event.eventType === 6) return 3;  // Penalty Awarded — elevated
     if (event.eventType === 18 || event.eventType === 16 || event.eventType === 15) return 4;
+    if (event.eventType === 1) return 4;  // Assist — minor
     if (event.eventType === 83 || event.eventType === 78) return 5;
   }
   return 4;

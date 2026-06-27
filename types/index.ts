@@ -181,9 +181,13 @@ export interface MatchSummary {
   homeTeam: string;
   homeTeamCode?: string;
   homeFlagCode?: string;
+  homeSlot?: string;
+  homeQualificationStatus?: string;
   awayTeam: string;
   awayTeamCode?: string;
   awayFlagCode?: string;
+  awaySlot?: string;
+  awayQualificationStatus?: string;
   status?: string;
   homeScore?: number;
   awayScore?: number;
@@ -262,6 +266,29 @@ export interface HomePayload {
   groups: GroupSummary[];
   standings: StandingGroup[];
   storylines: StorylineSummary[];
+}
+
+export interface ThirdPlaceTeamRanking {
+  rank: number;
+  groupCode: string;
+  teamName: string;
+  teamCode: string;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  conductScore: number;
+  qualificationStatus?: string;
+}
+
+export interface ThirdPlaceRankingsPayload {
+  qualified: ThirdPlaceTeamRanking[];
+  eliminated: ThirdPlaceTeamRanking[];
+  updatedAt: string;
 }
 
 // Frontend-specific types

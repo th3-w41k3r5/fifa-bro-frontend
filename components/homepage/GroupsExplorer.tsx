@@ -3,20 +3,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TeamLogo } from '@/components';
-import { GroupSummary, MatchSummary, StandingGroup, StandingRow } from '@/types';
+import { GroupSummary, MatchSummary, StandingGroup, StandingRow, ThirdPlaceRankingsPayload } from '@/types';
 import { ArrowRight, ShieldCheck, Trophy } from 'lucide-react';
 
 interface GroupsExplorerProps {
   groups: GroupSummary[];
   standings?: StandingGroup[];
   matches?: MatchSummary[];
+  thirdPlaceRankings?: ThirdPlaceRankingsPayload | null;
 }
 
 function normalizeTeamKey(value?: string) {
   return value?.trim().toLowerCase().replace(/\s+/g, ' ') ?? '';
 }
 
-export const GroupsExplorer: React.FC<GroupsExplorerProps> = ({ groups, standings = [], matches = [] }) => {
+export const GroupsExplorer: React.FC<GroupsExplorerProps> = ({ groups, standings = [], matches = [], thirdPlaceRankings }) => {
   const [hydratedStandings, setHydratedStandings] = useState<StandingGroup[]>(standings);
 
   useEffect(() => {
@@ -114,6 +115,7 @@ export const GroupsExplorer: React.FC<GroupsExplorerProps> = ({ groups, standing
           standings={standingsByGroup.get(group.code) ?? []}
           teamsByCode={teamsByCode}
           teamsByName={teamsByName}
+          thirdPlaceRankings={thirdPlaceRankings}
         />
       ))}
     </div>
@@ -125,9 +127,10 @@ interface GroupCardProps {
   standings: StandingRow[];
   teamsByCode: Map<string, { name: string; flagCode?: string; teamCode?: string }>;
   teamsByName: Map<string, { name: string; flagCode?: string; teamCode?: string }>;
+  thirdPlaceRankings?: ThirdPlaceRankingsPayload | null;
 }
 
-const GroupCard: React.FC<GroupCardProps> = ({ group, standings, teamsByCode, teamsByName }) => {
+const GroupCard: React.FC<GroupCardProps> = ({ group, standings, teamsByCode, teamsByName, thirdPlaceRankings }) => {
   return (
     <article className="group relative flex h-full min-h-[430px] flex-col overflow-hidden rounded-[26px] border border-white/[0.07] bg-[#080b10] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 hover:border-accent/35 hover:shadow-[0_28px_72px_rgba(0,183,255,0.10)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(0,183,255,0.14),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),transparent_42%)] opacity-70 transition-opacity group-hover:opacity-100" />
@@ -176,6 +179,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, standings, teamsByCode, te
                   teamsByName.get(normalizeTeamKey(standing.teamName)) ||
                   teamsByName.get(normalizeTeamKey(standing.teamCode))
                 }
+                thirdPlaceRankings={thirdPlaceRankings}
               />
             ))
           ) : (
@@ -204,28 +208,41 @@ function StandingLine({
   standing,
   index,
   teamMeta,
+  thirdPlaceRankings,
 }: {
   standing: StandingRow;
   index: number;
   teamMeta?: { name: string; flagCode?: string; teamCode?: string };
+  thirdPlaceRankings?: ThirdPlaceRankingsPayload | null;
 }) {
   const position = standing.position || index + 1;
   const teamName = standing.teamName || teamMeta?.name || standing.teamCode || 'TBD';
   const teamId = teamMeta?.teamCode || standing.teamCode || teamName;
   const teamHref = teamId ? `/teams/${encodeURIComponent(teamId)}` : undefined;
   const flagCode = teamMeta?.flagCode || teamName.toLowerCase().slice(0, 2);
+  
+  let isQualifiedThird = false;
+  if (position === 3 && thirdPlaceRankings) {
+    // Check if team is in qualified list
+    isQualifiedThird = thirdPlaceRankings.qualified.some(
+      (t: any) => t.teamName.toLowerCase() === teamName.toLowerCase() || 
+           (teamMeta?.teamCode && t.teamCode.toLowerCase() === teamMeta.teamCode.toLowerCase())
+    );
+  }
+
   const rowTone =
     position <= 2
       ? 'bg-emerald-400/[0.080]'
       : position === 3
-        ? 'bg-yellow-300/[0.080]'
+        ? (isQualifiedThird ? 'bg-yellow-300/[0.080]' : 'bg-red-400/[0.080]')
         : 'bg-red-400/[0.080]';
   const borderTone =
     position <= 2
       ? 'border-l-emerald-300'
       : position === 3
-        ? 'border-l-yellow-300'
+        ? (isQualifiedThird ? 'border-l-yellow-300' : 'border-l-red-700/[0.12]')
         : 'border-l-red-700/[0.12]';
+      
 
   return (
     <div

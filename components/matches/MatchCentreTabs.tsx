@@ -7,21 +7,41 @@ export type MatchCentreTab = 'live-feed' | 'timeline' | 'lineups' | 'info';
 interface MatchCentreTabsProps {
   activeSection: MatchCentreTab;
   onChange: (section: MatchCentreTab) => void;
+  matchDate?: string;
 }
 
-const tabs: Array<{ key: MatchCentreTab; label: string }> = [
+const allTabs: Array<{ key: MatchCentreTab; label: string }> = [
   { key: 'live-feed', label: 'Live Feed' },
   { key: 'timeline', label: 'Timeline' },
   { key: 'lineups', label: 'Lineups' },
   { key: 'info', label: 'Info' },
 ];
 
-export default function MatchCentreTabs({ activeSection, onChange }: MatchCentreTabsProps) {
+export default function MatchCentreTabs({ activeSection, onChange, matchDate }: MatchCentreTabsProps) {
+  // Determine which tabs to show based on match date
+  const tabs = React.useMemo(() => {
+    if (!matchDate) return allTabs;
+
+    const now = new Date();
+    const matchStart = new Date(matchDate);
+    
+    // Show all tabs if match starts within 30 minutes, or has already started
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+    if (matchStart.getTime() - now.getTime() <= THIRTY_MINUTES_MS) {
+      return allTabs;
+    }
+
+    // Only show live feed and timeline if match is >30 mins away
+    return allTabs.filter(t => t.key === 'live-feed' || t.key === 'timeline');
+  }, [matchDate]);
+
   return (
     <div
       role="tablist"
       aria-label="Match centre sections"
-      className="grid grid-cols-2 gap-2 rounded-2xl border border-white/[0.06] bg-black/25 p-1.5 sm:grid-cols-4"
+      className={`grid gap-2 rounded-2xl border border-white/[0.06] bg-black/25 p-1.5 ${
+        tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'
+      }`}
     >
       {tabs.map((tab) => {
         const active = tab.key === activeSection;

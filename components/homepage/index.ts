@@ -7,3 +7,4 @@ export { MatchSchedule } from './MatchSchedule';
 export { GroupsExplorer } from './GroupsExplorer';
 export { StandingsPreview } from './StandingsPreview';
 export { TournamentStats } from './TournamentStats';
+export { BestThirdPlaced } from './BestThirdPlaced';

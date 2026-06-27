@@ -11,13 +11,14 @@ import {
   MatchSchedule,
   GroupsExplorer,
   TournamentStats,
+  BestThirdPlaced,
 } from '@/components/homepage';
 import { Trophy, Zap, BookOpen, Users, BarChart3, CalendarDays } from 'lucide-react';
 
 // Import API client and types
-import { getGroups, getHomeData, getMatches, getStandings, getStorylines } from '@/lib/api';
+import { getGroups, getHomeData, getMatches, getStandings, getStorylines, getThirdPlaceRankings } from '@/lib/api';
 import { useAppSettings } from '@/contexts/AppSettingsContext';
-import type { GroupSummary, HomePayload, MatchSummary, StandingGroup, StorylineSummary } from '@/types';
+import type { GroupSummary, HomePayload, MatchSummary, StandingGroup, StorylineSummary, ThirdPlaceRankingsPayload } from '@/types';
 import { applyLiveUpdateToMatches, useLiveMatches } from '@/hooks/useLiveMatches';
 
 export default function HomePage() {
@@ -28,12 +29,14 @@ export default function HomePage() {
   const [allStandings, setAllStandings] = useState<StandingGroup[]>([]);
   const [allGroups, setAllGroups] = useState<GroupSummary[]>([]);
   const [allStorylines, setAllStorylines] = useState<StorylineSummary[]>([]);
+  const [thirdPlaceRankings, setThirdPlaceRankings] = useState<ThirdPlaceRankingsPayload | null>(null);
 
   // Loading states
   const [isLoadingMatches, setIsLoadingMatches] = useState(true);
   const [isLoadingStandings, setIsLoadingStandings] = useState(true);
   const [isLoadingGroups, setIsLoadingGroups] = useState(true);
   const [isLoadingStorylines, setIsLoadingStorylines] = useState(true);
+  const [isLoadingThirdPlace, setIsLoadingThirdPlace] = useState(true);
 
   // Error states
   const [homeError, setHomeError] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function HomePage() {
   const [standingsError, setStandingsError] = useState<string | null>(null);
   const [groupsError, setGroupsError] = useState<string | null>(null);
   const [storylinesError, setStorylinesError] = useState<string | null>(null);
+  const [thirdPlaceError, setThirdPlaceError] = useState<string | null>(null);
 
   const scrollToToday = () => {
     const todaySection = document.getElementById('today-matchday');
@@ -116,6 +120,19 @@ export default function HomePage() {
         setStorylinesError(error instanceof Error ? error.message : 'Failed to load storylines');
       } finally {
         setIsLoadingStorylines(false);
+      }
+
+      // Fetch third place rankings
+      try {
+        setIsLoadingThirdPlace(true);
+        const rankings = await getThirdPlaceRankings();
+        setThirdPlaceRankings(rankings);
+        setThirdPlaceError(null);
+      } catch (error) {
+        console.error('Error fetching third place rankings:', error);
+        setThirdPlaceError(error instanceof Error ? error.message : 'Failed to load third place rankings');
+      } finally {
+        setIsLoadingThirdPlace(false);
       }
     };
 
@@ -276,10 +293,21 @@ export default function HomePage() {
           ) : standingsError ? (
             <EmptyState title="Unable to load standings" description={standingsError} variant="error" />
           ) : homepageGroups.length > 0 ? (
-            <GroupsExplorer groups={homepageGroups} standings={allStandings} matches={allMatches} />
+            <GroupsExplorer groups={homepageGroups} standings={allStandings} matches={allMatches} thirdPlaceRankings={thirdPlaceRankings} />
           ) : (
             <EmptyState title="No groups available" description="Group information will be available soon" />
           )}
+        </section>
+
+        {/* SECTION: Best Third-Placed Teams */}
+        <section id="third-placed-teams" className="scroll-mt-24">
+          {isLoadingThirdPlace && !thirdPlaceRankings ? (
+            <LoadingState variant="skeleton" />
+          ) : thirdPlaceError && !thirdPlaceRankings ? (
+            <EmptyState title="Unable to load third-placed teams" description={thirdPlaceError} variant="error" />
+          ) : thirdPlaceRankings ? (
+            <BestThirdPlaced data={thirdPlaceRankings} />
+          ) : null}
         </section>
 
         {/* SECTION 6: Tournament Stats */}

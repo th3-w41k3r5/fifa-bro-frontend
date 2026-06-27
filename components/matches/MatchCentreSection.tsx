@@ -32,9 +32,16 @@ function getFeedEventMergeKey(event: TimelineEvent): string {
         ? `${event.playerOn}-${event.playerOff}`
         : event.label;
 
+  // For unique match state events, don't include the minute to ensure they deduplicate correctly
+  // even if the API and static data use different minutes (e.g. 90+9' vs 99')
+  const isUniqueState = event.type === 'match_state' && 
+    !['var_check', 'hydration_break', 'match_resumed'].includes(event.stateKind);
+  
+  const minuteKey = isUniqueState ? '' : event.minute;
+
   return [
     event.type,
-    event.minute,
+    minuteKey,
     'teamSide' in event ? event.teamSide : '',
     actor,
   ].join('|');
@@ -64,6 +71,8 @@ export default function MatchCentreSection({
     return buildTimelineEvents(fifaDetail, homeTeamDetail, awayTeamDetail, playerMap);
   }, [fifaDetail, homeTeamDetail, awayTeamDetail, playerMap]);
 
+  const isMatchCompleted = (fifaDetail.Period != null && fifaDetail.Period >= 10) || fifaDetail.MatchStatus === 0;
+
   useEffect(() => {
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -90,14 +99,16 @@ export default function MatchCentreSection({
 
     fetchTimeline();
 
-    // Poll every 30s to keep the feed current during live matches
-    pollTimer = setInterval(fetchTimeline, 30_000);
+    // Only poll for live matches — completed matches don't need continuous fetching
+    if (!isMatchCompleted) {
+      pollTimer = setInterval(fetchTimeline, 30_000);
+    }
 
     return () => {
       cancelled = true;
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [fifaMatchId]);
+  }, [fifaMatchId, isMatchCompleted]);
 
   const liveFeedEvents = useMemo(() => {
     if (!homeTeamDetail || !awayTeamDetail) return [];
@@ -166,7 +177,7 @@ export default function MatchCentreSection({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(0,183,255,0.10),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.04),transparent_45%)]" />
 
       <div className="relative z-10 min-w-0 space-y-8 overflow-x-hidden">
-        <MatchCentreTabs activeSection={activeSection} onChange={setActiveSection} />
+        <MatchCentreTabs activeSection={activeSection} onChange={setActiveSection} matchDate={fifaDetail.Date} />
 
         <AnimatePresence mode="wait">
           <motion.div

@@ -47,6 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, userMenu, teams = [
   const navItems = [
     { label: 'Home', href: '/', id: 'home' },
     { label: 'Matches', href: '/matches', id: 'matches' },
+    { label: 'Knockout', href: '/knockout', id: 'knockout' },
     { label: 'Teams', href: '/teams', id: 'teams' },
     { label: 'Groups', href: '/groups', id: 'groups' },
   ];
@@ -58,12 +59,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, userMenu, teams = [
     { id: 'match-schedule', label: 'Match Schedule', href: '#match-schedule', icon: Calendar },
     { id: 'standings', label: 'Standings', href: '#standings', icon: Users },
     { id: 'tournament-stats', label: 'Tournament Stats', href: '#tournament-stats', icon: BarChart3 },
+    { id: 'knockout', label: 'Knockout Stage', href: '/knockout', icon: Trophy },
   ];
 
   const handleSectionClick = (href: string) => {
-    const element = document.getElementById(href.slice(1));
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (href.startsWith('/')) {
+      window.location.href = href;
+    } else {
+      const element = document.getElementById(href.slice(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     setSectionsMenuOpen(false);
   };
@@ -74,11 +80,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, userMenu, teams = [
       ? 'home'
       : pathname.startsWith('/matches')
         ? 'matches'
-        : pathname.startsWith('/teams')
-          ? 'teams'
-          : pathname.startsWith('/groups')
-            ? 'groups'
-            : undefined);
+        : pathname.startsWith('/knockout')
+          ? 'knockout'
+          : pathname.startsWith('/teams')
+            ? 'teams'
+            : pathname.startsWith('/groups')
+              ? 'groups'
+              : undefined);
 
   const hasSearchData = teams.length > 0 || matches.length > 0 || groups.length > 0 || storylines.length > 0;
 
@@ -283,6 +291,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, userMenu, teams = [
               <span className="mr-2 inline-flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               <span className="uppercase tracking-[0.12em] font-semibold">Live</span>
             </div>*/}
+
+              {/* Knockout Mobile Icon */}
+              <a
+                href="/knockout"
+                className="md:hidden inline-flex items-center justify-center rounded-full border border-accent/20 bg-[linear-gradient(135deg,rgba(0,183,255,0.15),rgba(0,183,255,0.08))] px-3 py-2.5 text-accent transition duration-300 hover:border-accent/40 hover:bg-[linear-gradient(135deg,rgba(0,183,255,0.20),rgba(0,183,255,0.12))] hover:shadow-[0_8px_24px_rgba(0,183,255,0.10)] focus:outline-none focus:ring-2 focus:ring-accent/40"
+                aria-label="Knockout Stage"
+              >
+                <Trophy size={16} />
+              </a>
 
               {/* Search Button */}
               {hasSearchData && (

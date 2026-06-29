@@ -135,8 +135,8 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
         {fifaDetail && (
           <MatchCentreSection
             fifaDetail={fifaDetail}
-            homeTeamName={match.homeTeam}
-            awayTeamName={match.awayTeam}
+            homeTeamName={match.homeTeam || match.homeSlot || 'TBD'}
+            awayTeamName={match.awayTeam || match.awaySlot || 'TBD'}
             homeFlagCode={match.homeFlagCode}
             awayFlagCode={match.awayFlagCode}
           />
@@ -144,10 +144,10 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
 
         {match.groupCode && (
           <MatchEditorial
-            homeTeam={match.homeTeam}
-            awayTeam={match.awayTeam}
+            homeTeam={match.homeTeam || match.homeSlot || 'TBD'}
+            awayTeam={match.awayTeam || match.awaySlot || 'TBD'}
             group={match.groupCode}
-            heroText={`${match.homeTeam} vs ${match.awayTeam}`}
+            heroText={`${match.homeTeam || match.homeSlot || 'TBD'} vs ${match.awayTeam || match.awaySlot || 'TBD'}`}
             storylines={storylines}
           />
         )}

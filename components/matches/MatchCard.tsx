@@ -51,7 +51,7 @@ export default function MatchCard({ match }: MatchCardProps) {
             <div className="flex min-w-0 flex-col items-start gap-2">
               <TeamLogo
                 flagCode={match.homeFlagCode || (match.homeTeam?.toLowerCase().slice(0, 2) ?? 'un')}
-                teamName={match.homeTeam || 'TBD'}
+                teamName={match.homeTeam || match.homeSlot || 'TBD'}
                 size="sm"
               />
               <div className="flex flex-col items-start gap-1">
@@ -60,11 +60,16 @@ export default function MatchCard({ match }: MatchCardProps) {
                     homeWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
                   }`}
                 >
-                  {match.homeTeam || 'TBD'}
+                  {match.homeTeam || match.homeSlot || 'TBD'}
                 </span>
-                {match.homeQualificationStatus === 'CouldQualify' && (
+                {match.stage !== 'First Stage' && match.stage !== 'Group Stage' && (match.homeQualificationStatus === 'CouldQualify' || (match.homeQualificationStatus?.includes('Qualified') && (match.homePlayed || 0) < 3)) && (
                   <span className="rounded bg-yellow-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
                     Provisional
+                  </span>
+                )}
+                {match.homeIsPredicted && (
+                  <span className="rounded bg-blue-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-500 ring-1 ring-blue-400/20">
+                    Predicted
                   </span>
                 )}
               </div>
@@ -83,7 +88,7 @@ export default function MatchCard({ match }: MatchCardProps) {
             <div className="flex min-w-0 flex-col items-end gap-2 text-right">
               <TeamLogo
                 flagCode={match.awayFlagCode || (match.awayTeam?.toLowerCase().slice(0, 2) ?? 'un')}
-                teamName={match.awayTeam}
+                teamName={match.awayTeam || match.awaySlot || 'TBD'}
                 size="sm"
               />
               <div className="flex flex-col items-end gap-1">
@@ -92,11 +97,16 @@ export default function MatchCard({ match }: MatchCardProps) {
                     awayWon ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
                   }`}
                 >
-                  {match.awayTeam}
+                  {match.awayTeam || match.awaySlot || 'TBD'}
                 </span>
-                {match.awayQualificationStatus === 'CouldQualify' && (
+                {match.stage !== 'First Stage' && match.stage !== 'Group Stage' && (match.awayQualificationStatus === 'CouldQualify' || (match.awayQualificationStatus?.includes('Qualified') && (match.awayPlayed || 0) < 3)) && (
                   <span className="rounded bg-yellow-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
                     Provisional
+                  </span>
+                )}
+                {match.awayIsPredicted && (
+                  <span className="rounded bg-blue-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-500 ring-1 ring-blue-400/20">
+                    Predicted
                   </span>
                 )}
               </div>

@@ -225,7 +225,7 @@ function StandingLine({
   if (position === 3 && thirdPlaceRankings) {
     // Check if team is in qualified list
     isQualifiedThird = thirdPlaceRankings.qualified.some(
-      (t: any) => t.teamName.toLowerCase() === teamName.toLowerCase() || 
+      (t: { teamName: string; teamCode: string }) => t.teamName.toLowerCase() === teamName.toLowerCase() || 
            (teamMeta?.teamCode && t.teamCode.toLowerCase() === teamMeta.teamCode.toLowerCase())
     );
   }

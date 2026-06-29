@@ -118,7 +118,14 @@ export const BestThirdPlaced: React.FC<BestThirdPlacedProps> = ({ data }) => {
                   
                   <div className="flex items-center gap-3 min-w-0">
                     <TeamLogo flagCode={team.teamCode} teamName={team.teamName} size="sm" />
-                    <span className="font-bold text-sm md:text-base text-text-primary truncate">{team.teamName}</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-sm md:text-base text-text-primary truncate">{team.teamName}</span>
+                      {(isQualified || team.qualificationStatus?.includes('Qualified')) && (team.played || 0) < 3 && (
+                        <span className="inline-block mt-0.5 rounded bg-yellow-400/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20 w-fit">
+                          Provisional
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <span className="text-center font-bold text-xs md:text-sm text-text-secondary">{team.groupCode}</span>

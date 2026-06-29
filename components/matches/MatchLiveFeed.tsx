@@ -881,7 +881,12 @@ function tierSpacingClass(tier: 1 | 2 | 3 | 4 | 5): string {
 
 export default function MatchLiveFeed({ events, homeFlagCode, awayFlagCode }: MatchLiveFeedProps) {
   const sortedAndFilteredEvents = React.useMemo(() => {
-    const filtered = events.filter((event) => event.type !== 'substitution' || hasMinute(event));
+    const filtered = events.filter((event) => {
+      if (event.type === 'substitution' && !hasMinute(event)) return false;
+      // Filter out placeholder match states (like Half Time) that haven't occurred yet (missing timestamp)
+      if (event.type === 'match_state' && !event.timestamp) return false;
+      return true;
+    });
     
     return [...filtered].sort((a, b) => {
       // 1. Primary sort: MatchMinute DESC (newest first globally)

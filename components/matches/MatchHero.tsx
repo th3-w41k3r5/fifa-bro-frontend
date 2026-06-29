@@ -53,7 +53,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
             {match.groupCode ? `Group ${match.groupCode}` : 'World Cup'} • {match.stage}
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-fifa-semi leading-[0.95] tracking-[-0.04em] text-text-primary text-[24px] md:text-4xl">
-            {match.homeTeam} vs {match.awayTeam}
+            {match.homeTeam || match.homeSlot || 'TBD'} vs {match.awayTeam || match.awaySlot || 'TBD'}
           </h1>
           <p className="mt-5 max-w-2xl text-base font-semibold leading-relaxed text-text-secondary">
             Match details, venue information, and editorial context for this FIFA World Cup 2026 fixture.
@@ -61,12 +61,15 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
 
           <div className="mt-8 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-start gap-4 rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
             <TeamBlock
+              label={match.homeSlot ? `Slot ${match.homeSlot}` : 'Home'}
               name={match.homeTeam}
               flagCode={match.homeFlagCode}
-              label="Home"
               winner={homeWon}
               goalScorers={homeGoals}
               qualificationStatus={match.homeQualificationStatus}
+              isPredicted={match.homeIsPredicted}
+              played={match.homePlayed}
+              stage={match.stage}
             />
             <div className="md:self-center text-center">
               {hasScore ? (
@@ -88,13 +91,16 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
               )}
             </div>
             <TeamBlock
+              label={match.awaySlot ? `Slot ${match.awaySlot}` : 'Away'}
               name={match.awayTeam}
               flagCode={match.awayFlagCode}
-              label="Away"
               align="right"
               winner={awayWon}
               goalScorers={awayGoals}
               qualificationStatus={match.awayQualificationStatus}
+              isPredicted={match.awayIsPredicted}
+              played={match.awayPlayed}
+              stage={match.stage}
             />
           </div>
         </div>
@@ -137,6 +143,9 @@ function TeamBlock({
   winner = false,
   goalScorers,
   qualificationStatus,
+  isPredicted,
+  played,
+  stage,
 }: {
   name?: string;
   flagCode?: string;
@@ -145,8 +154,12 @@ function TeamBlock({
   winner?: boolean;
   goalScorers?: GoalScorer[];
   qualificationStatus?: string;
+  isPredicted?: boolean;
+  played?: number;
+  stage?: string;
 }) {
   const showGoalScorers = goalScorers && goalScorers.length > 0;
+  const isKnockout = stage && stage !== 'First Stage' && stage !== 'Group Stage';
 
   return (
     <div className={`flex min-w-0 flex-col gap-3 ${align === 'right' ? 'items-end text-right' : 'items-start'}`}>
@@ -160,10 +173,17 @@ function TeamBlock({
         >
           {name || 'TBD'}
         </p>
-        {qualificationStatus === 'CouldQualify' && (
+        {isKnockout && (qualificationStatus === 'CouldQualify' || (qualificationStatus?.includes('Qualified') && (played || 0) < 3)) && (
           <div className={`mt-1.5 ${align === 'right' ? 'text-right' : 'text-left'}`}>
             <span className="inline-block rounded bg-yellow-400/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-yellow-500 ring-1 ring-yellow-400/20">
               Provisional
+            </span>
+          </div>
+        )}
+        {isPredicted && (
+          <div className={`mt-1.5 ${align === 'right' ? 'text-right' : 'text-left'}`}>
+            <span className="inline-block rounded bg-blue-400/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-blue-500 ring-1 ring-blue-400/20">
+              Predicted
             </span>
           </div>
         )}

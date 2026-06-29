@@ -27,7 +27,7 @@ export default function MatchDetails({ match }: MatchDetailsProps) {
       value: getMatchStatusLabel(match),
       subtext:
         match.homeScore !== undefined && match.awayScore !== undefined
-          ? `${match.homeTeam} ${match.homeScore} - ${match.awayScore} ${match.awayTeam}`
+          ? `${match.homeTeam || match.homeSlot || 'TBD'} ${match.homeScore} - ${match.awayScore} ${match.awayTeam || match.awaySlot || 'TBD'}`
           : undefined,
       icon: <Trophy size={18} className="text-secondary" />,
     },

@@ -182,12 +182,16 @@ export interface MatchSummary {
   homeTeamCode?: string;
   homeFlagCode?: string;
   homeSlot?: string;
+  homeIsPredicted?: boolean;
   homeQualificationStatus?: string;
+  homePlayed?: number;
   awayTeam: string;
   awayTeamCode?: string;
   awayFlagCode?: string;
   awaySlot?: string;
+  awayIsPredicted?: boolean;
   awayQualificationStatus?: string;
+  awayPlayed?: number;
   status?: string;
   homeScore?: number;
   awayScore?: number;

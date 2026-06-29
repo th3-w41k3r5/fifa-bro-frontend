@@ -12,3 +12,6 @@ export * from './teams';
 
 // Matches Components
 export * from './matches';
+
+// Knockout Components
+export * from './knockout';

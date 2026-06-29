@@ -131,9 +131,9 @@ export async function getThirdPlaceRankings(): Promise<ThirdPlaceRankingsPayload
 
     // Endpoint directly returns the payload, no { success, data } wrapper
     return data as ThirdPlaceRankingsPayload;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Third Place API Error:', error);
-    throw new Error(error.message || 'Failed to fetch third place rankings');
+    throw new Error((error as Error)?.message || 'Failed to fetch third place rankings');
   } finally {
     clearTimeout(timeoutId);
   }

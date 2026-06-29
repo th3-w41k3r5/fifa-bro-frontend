@@ -15,6 +15,7 @@ const config = {
         'surface-elevated': '#13171f',
         'border': 'rgba(255, 255, 255, 0.06)',
         'accent': '#00b7ff',
+        'gold': '#FFD700',
         'primary': '#00b7ff',
         'secondary': '#a0afc4',
         'success': '#22C55E',

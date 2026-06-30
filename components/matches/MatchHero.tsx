@@ -4,8 +4,9 @@ import React from 'react';
 import { Badge, GoalScorer, MatchSummary } from '@/types';
 import { Badge as FixtureBadge, TeamLogo } from '@/components';
 import { MatchGoalScorers } from './MatchGoalScorers';
-import { Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin,X, Check } from 'lucide-react';
 import { getMatchStatusLabel } from '@/lib/matchStatus';
+import { buildTimelineEventsFromApi } from '@/lib/fifaMatchUtils';
 
 interface MatchHeroProps {
   match: MatchSummary;
@@ -33,11 +34,64 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
       ? matchDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
       : 'Date TBD';
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && match.homeScore! > match.awayScore!;
-  const awayWon = hasScore && match.awayScore! > match.homeScore!;
+  const homeWon = hasScore && (match.homeScore! > match.awayScore! || (match.homeScore === match.awayScore && (match.homePenaltyScore ?? 0) > (match.awayPenaltyScore ?? 0)));
+  const awayWon = hasScore && (match.awayScore! > match.homeScore! || (match.homeScore === match.awayScore && (match.awayPenaltyScore ?? 0) > (match.homePenaltyScore ?? 0)));
   const statusLabel = getMatchStatusLabel(match);
 
   // Show goal scorers only for live or complete matches
+  let homePenalties = match.shootoutPenalties?.home?.map(p => ({
+    name: p.playerName.split(' ').slice(-1)[0] || p.playerName,
+    isGoal: p.type === 'penalty_goal',
+    homeScore: p.homePenaltyScore ?? 0,
+    awayScore: p.awayPenaltyScore ?? 0,
+    timestamp: p.timestamp
+  })) || [];
+  
+  let awayPenalties = match.shootoutPenalties?.away?.map(p => ({
+    name: p.playerName.split(' ').slice(-1)[0] || p.playerName,
+    isGoal: p.type === 'penalty_goal',
+    homeScore: p.homePenaltyScore ?? 0,
+    awayScore: p.awayPenaltyScore ?? 0,
+    timestamp: p.timestamp
+  })) || [];
+
+  if (homePenalties.length === 0 && awayPenalties.length === 0 && match.fifaDetail && match.fifaDetail.HomeTeam && match.fifaDetail.AwayTeam) {
+    const timelineEvents = buildTimelineEventsFromApi(
+      match.fifaDetail,
+      match.fifaDetail.HomeTeam,
+      match.fifaDetail.AwayTeam,
+      match.fifaDetail.Event || []
+    );
+    homePenalties = timelineEvents
+      .filter((e): e is Extract<typeof e, { type: 'penalty_goal' | 'penalty_saved' | 'penalty_miss' }> => 'teamSide' in e && e.teamSide === 'home' && e.type.startsWith('penalty_'))
+      .map(p => ({
+        name: p.playerName.split(' ').slice(-1)[0] || p.playerName,
+        isGoal: p.type === 'penalty_goal',
+        homeScore: p.homePenaltyScore ?? 0,
+        awayScore: p.awayPenaltyScore ?? 0,
+        timestamp: p.timestamp
+      }));
+    awayPenalties = timelineEvents
+      .filter((e): e is Extract<typeof e, { type: 'penalty_goal' | 'penalty_saved' | 'penalty_miss' }> => 'teamSide' in e && e.teamSide === 'away' && e.type.startsWith('penalty_'))
+      .map(p => ({
+        name: p.playerName.split(' ').slice(-1)[0] || p.playerName,
+        isGoal: p.type === 'penalty_goal',
+        homeScore: p.homePenaltyScore ?? 0,
+        awayScore: p.awayPenaltyScore ?? 0,
+        timestamp: p.timestamp
+      }));
+  }
+
+  const penaltyRounds = Math.max(homePenalties.length, awayPenalties.length);
+  const penaltyRows = Array.from({ length: penaltyRounds }).map((_, i) => ({
+    home: homePenalties[i],
+    away: awayPenalties[i]
+  }));
+
+  const homeFirstTime = homePenalties[0]?.timestamp ? new Date(homePenalties[0].timestamp).getTime() : 9999999999999;
+  const awayFirstTime = awayPenalties[0]?.timestamp ? new Date(awayPenalties[0].timestamp).getTime() : 9999999999999;
+  const firstToKick = homeFirstTime < awayFirstTime ? match.homeTeam : match.awayTeam;
+
   const homeGoals = match.goalScorers?.home ?? [];
   const awayGoals = match.goalScorers?.away ?? [];
 
@@ -59,7 +113,7 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
             Match details, venue information, and editorial context for this FIFA World Cup 2026 fixture.
           </p>
 
-          <div className="mt-8 grid grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)] items-start gap-4 rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
+          <div className="mt-8 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4 rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
             <TeamBlock
               label={match.homeSlot ? `Slot ${match.homeSlot}` : 'Home'}
               name={match.homeTeam}
@@ -73,10 +127,24 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
             />
             <div className="md:self-center text-center">
               {hasScore ? (
-                <div>
-                  <p className="font-display text-4xl font-black text-accent md:text-4xl">
-                    {match.homeScore}-{match.awayScore}
-                  </p>
+                <div className="flex flex-col items-center">
+                  <div className="font-display flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 text-3xl md:text-5xl font-black text-accent whitespace-nowrap">
+                    <div className="flex md:hidden flex-col items-center">
+                      <span>{match.homeScore}-{match.awayScore}</span>
+                      {(match.homePenaltyScore !== undefined && match.homePenaltyScore !== null) && (
+                        <span className="text-sm font-semibold text-accent/80">({match.homePenaltyScore}) PENS ({match.awayPenaltyScore})</span>
+                      )}
+                    </div>
+                    <div className="hidden md:flex items-center gap-3">
+                      {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                        <span className="text-xl md:text-2xl font-semibold text-accent/70">({match.homePenaltyScore})</span>
+                      )}
+                      <span>{match.homeScore}-{match.awayScore}</span>
+                      {match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null && (
+                        <span className="text-xl md:text-2xl font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+                      )}
+                    </div>
+                  </div>
                   <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-text-secondary">
                     {statusLabel}
                   </p>
@@ -103,6 +171,74 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
               stage={match.stage}
             />
           </div>
+
+          {(homePenalties.length > 0 || awayPenalties.length > 0) && (
+            <div className="mt-6 w-full max-w-xl mx-auto rounded-[24px] border border-white/[0.06] bg-black/20 p-4 md:p-6">
+              <p className="mb-4 text-center text-[10px] font-extrabold uppercase tracking-[0.24em] text-text-secondary">
+                Penalty Shootout
+              </p>
+              
+              {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                <p className="mb-6 text-center text-xs font-semibold text-text-primary">
+                  {match.homePenaltyScore > (match.awayPenaltyScore || 0) ? match.homeTeam || match.homeSlot || 'Home' : match.awayTeam || match.awaySlot || 'Away'} wins {Math.max(match.homePenaltyScore, match.awayPenaltyScore || 0)} - {Math.min(match.homePenaltyScore, match.awayPenaltyScore || 0)} on penalties
+                </p>
+              )}
+
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-4 text-xs font-semibold text-text-secondary">
+                  <div className="flex-1 text-left truncate">{match.homeTeam}</div>
+                  <div className="flex gap-2 mx-4">
+                    {match.homeFlagCode && <TeamLogo teamName={match.homeTeam || ''} flagCode={match.homeFlagCode} size="sm" />}
+                    {match.awayFlagCode && <TeamLogo teamName={match.awayTeam || ''} flagCode={match.awayFlagCode} size="sm" />}
+                  </div>
+                  <div className="flex-1 text-right truncate">{match.awayTeam}</div>
+                </div>
+
+                <div className="divide-y divide-white/5 border-t border-b border-white/5">
+                  {penaltyRows.map((row, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-1.5 md:py-2 text-xs md:text-sm font-medium">
+                      <div className="flex-1 flex flex-col min-w-0 pr-2">
+                        {row.home ? (
+                          <>
+                            <span className="truncate text-text-primary text-[9px] md:text-[10px]">{row.home.name}</span>
+                            <span className="text-[8px] md:text-[9px] text-text-secondary">
+                              {row.home.isGoal ? 'Goal' : 'Miss'} ({row.home.homeScore} - {row.home.awayScore})
+                            </span>
+                          </>
+                        ) : <div className="h-6" />}
+                      </div>
+                      
+                      <div className="flex gap-6 mx-2 text-sm md:text-base font-black">
+                        <span className={`w-4 text-center ${row.home?.isGoal ? 'text-emerald-500' : (row.home ? 'text-red-500' : '')}`}>
+                          {row.home ? (row.home.isGoal ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />) : ''}
+                        </span>
+                        <span className={`w-4 text-center ${row.away?.isGoal ? 'text-emerald-500' : (row.away ? 'text-red-500' : '')}`}>
+                          {row.away ? (row.away.isGoal ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />) : ''}
+                        </span>
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col items-end min-w-0 pl-2 text-right">
+                        {row.away ? (
+                          <>
+                            <span className="truncate text-text-primary text-[9px] md:text-[10px]">{row.away.name}</span>
+                            <span className="text-[8px] md:text-[9px] text-text-secondary">
+                              {row.away.isGoal ? 'Goal' : 'Miss'} ({row.away.homeScore} - {row.away.awayScore})
+                            </span>
+                          </>
+                        ) : <div className="h-6" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {homePenalties.length > 0 && (
+                  <div className="mt-3 rounded bg-white/5 py-2 text-center text-[10px] font-semibold text-text-secondary">
+                    {firstToKick} first to kick
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-[24px] border border-white/[0.07] bg-white/[0.035] p-5">
@@ -165,9 +301,9 @@ function TeamBlock({
     <div className={`flex min-w-0 flex-col gap-3 ${align === 'right' ? 'items-end text-right' : 'items-start'}`}>
       <TeamLogo flagCode={flagCode || (name?.toLowerCase().slice(0, 2) ?? 'un')} teamName={name || 'TBD'} size="lg" />
       <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-text-secondary">{label}</p>
-      <div>
+      <div className={`w-full min-w-0 ${align === 'right' ? 'text-right' : 'text-left'}`}>
         <p
-          className={`max-w-full truncate border-b-2 pb-1 text-xl font-black uppercase leading-none md:text-2xl ${
+          className={`inline-block max-w-full truncate border-b-2 pb-1 text-lg font-black uppercase leading-none md:text-2xl ${
             winner ? 'border-emerald-400 text-text-primary' : 'border-transparent text-text-primary'
           }`}
         >

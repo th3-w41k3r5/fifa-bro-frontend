@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { TeamLogo } from '@/components';
 import { TimelineEvent } from '@/lib/fifaMatchUtils';
+import { PenaltyShootoutEvent } from '@/types';
 import { GoalTypeBadge } from './matchCentreIcons';
 
 /* ─────────────────────────────────────────────
@@ -299,7 +300,7 @@ function GoalCard({ event, homeFlagCode, awayFlagCode }: { event: GoalEvent; hom
                     {event.homeGoals}
                   </span>
                   
-                  <div className="h-[3px] w-3 rounded-full bg-white/[0.12]" />
+                  <div className="h-[3px] w-3 rounded-full bg-white" />
                   
                   <span className={`w-7 text-center text-[34px] font-bold tabular-nums leading-[0.9] tracking-tight sm:text-[38px] ${event.awayGoals > event.homeGoals ? (isOwnGoal ? 'text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.4)]') : 'text-white/95'}`}>
                     {event.awayGoals}
@@ -838,7 +839,36 @@ function FeedCard({ event, homeFlagCode, awayFlagCode }: { event: TimelineEvent;
   if (event.type === 'booking') return <CardEventCard event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
   if (event.type === 'substitution') return <SubstitutionCard event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
   if (event.type === 'match_state') return <MatchStateDivider event={event} />;
-  return <SimpleEventRenderer event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
+  if (event.type === 'penalty_goal' || event.type === 'penalty_miss' || event.type === 'penalty_saved') return <ShootoutEventCard event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
+  if (event.type === 'simple') return <SimpleEventRenderer event={event} homeFlagCode={homeFlagCode} awayFlagCode={awayFlagCode} />;
+  return null;
+}
+
+function ShootoutEventCard({ event, homeFlagCode, awayFlagCode }: { event: PenaltyShootoutEvent; homeFlagCode?: string; awayFlagCode?: string }) {
+  const isGoal = event.type === 'penalty_goal';
+  const scoreText = event.homePenaltyScore != null && event.awayPenaltyScore != null 
+    ? `${event.homePenaltyScore} - ${event.awayPenaltyScore}` : '';
+    
+  return (
+    <div className={`relative flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-4 ${isGoal ? 'ring-1 ring-emerald-500/20' : ''}`}>
+      <div className="flex min-w-0 items-center gap-4">
+        <div className={`flex shrink-0 h-8 w-8 items-center justify-center rounded-full border ${isGoal ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-500' : 'border-red-500/30 bg-red-500/20 text-red-500'}`}>
+          <div className="h-3 w-3 rounded-full bg-current"></div>
+        </div>
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-xs font-bold uppercase tracking-widest text-text-secondary">{event.teamName}</span>
+          <span className="truncate text-lg font-black text-white">{event.playerName}</span>
+          <span className="truncate text-xs font-medium text-text-secondary">
+            {event.type === 'penalty_saved' ? 'Saved' : (event.type === 'penalty_miss' ? 'Missed' : 'Goal')}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <TeamLogo flagCode={(event.teamSide === 'home' ? homeFlagCode : awayFlagCode) || 'un'} teamName={event.teamName} size="sm" />
+        {scoreText && <span className="rounded bg-black/40 px-2 py-1 text-xs font-black tracking-widest text-accent">{scoreText}</span>}
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════
@@ -847,6 +877,7 @@ function FeedCard({ event, homeFlagCode, awayFlagCode }: { event: TimelineEvent;
 
 function getEventTier(event: TimelineEvent): 1 | 2 | 3 | 4 | 5 {
   if (event.type === 'goal') return 1;
+  if (event.type === 'penalty_goal' || event.type === 'penalty_miss' || event.type === 'penalty_saved') return 2;
   if (event.type === 'booking' && event.cardType === 2) return 2;
   if (event.type === 'booking') return 3;
   if (event.type === 'substitution') return 3;

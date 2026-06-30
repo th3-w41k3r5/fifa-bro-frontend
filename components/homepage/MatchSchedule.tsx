@@ -192,8 +192,9 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
   const venue = [match.stadium, match.city].filter(Boolean).join(', ');
   const matchHref = `/matches/${encodeURIComponent(String(match.id))}`;
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && match.homeScore! > match.awayScore!;
-  const awayWon = hasScore && match.awayScore! > match.homeScore!;
+  const isDraw = hasScore && match.homeScore === match.awayScore;
+  const homeWon = hasScore && (match.homeScore! > match.awayScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.homePenaltyScore > match.awayPenaltyScore));
+  const awayWon = hasScore && (match.awayScore! > match.homeScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.awayPenaltyScore > match.homePenaltyScore));
   const statusLabel = getMatchStatusLabel(match);
 
   const status = match.status?.toLowerCase();
@@ -264,13 +265,19 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
           <MatchBadges match={match} compact />
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_48px_minmax(0,1fr)] items-center gap-2 rounded-2xl border border-white/[0.04] bg-white/[0.025] px-3 py-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-2xl border border-white/[0.04] bg-white/[0.025] px-3 py-4">
           <TeamSide name={match.homeTeam} flagCode={match.homeFlagCode} align="left" winner={homeWon} />
 
           <div className="text-center">
             {hasScore ? (
-              <span className="font-display text-lg font-black leading-none text-accent">
-                {match.homeScore}-{match.awayScore}
+              <span className="font-display flex items-center justify-center gap-1.5 text-lg font-black leading-none text-accent whitespace-nowrap">
+                {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                  <span className="text-xs font-semibold text-accent/70">({match.homePenaltyScore})</span>
+                )}
+                <span>{match.homeScore}-{match.awayScore}</span>
+                {match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null && (
+                  <span className="text-xs font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+                )}
               </span>
             ) : (
               <span className="text-[10px] font-black uppercase tracking-[0.16em] text-text-secondary/70">VS</span>
@@ -297,8 +304,14 @@ const MatchRow: React.FC<MatchRowProps> = ({ match, index }) => {
 
         <div className="hidden text-center md:block">
           {hasScore ? (
-            <span className="font-display text-xl font-black leading-none text-accent">
-              {match.homeScore}-{match.awayScore}
+            <span className="font-display flex items-center justify-center gap-1.5 text-xl font-black leading-none text-accent whitespace-nowrap">
+                {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                  <span className="text-sm font-semibold text-accent/70">({match.homePenaltyScore})</span>
+                )}
+                <span>{match.homeScore}-{match.awayScore}</span>
+                {match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null && (
+                  <span className="text-sm font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+                )}
             </span>
           ) : (
             <span className="text-xs font-black uppercase tracking-[0.16em] text-text-secondary/70">VS</span>

@@ -5,6 +5,7 @@ import {
   FifaTeamDetail,
   FifaCoach,
   FifaTimelineEvent,
+  PenaltyShootoutEvent,
 } from '@/types';
 
 export function getLocalizedText(field?: FifaLocalizedField[]): string {
@@ -180,7 +181,9 @@ export type MatchStateKind =
   | 'match_start'
   | 'half_time'
   | 'second_half_start'
+  | 'regular_time_end'
   | 'full_time'
+  | 'match_end'
   | 'hydration_break'
   | 'match_resumed'
   | 'var_check'
@@ -188,9 +191,27 @@ export type MatchStateKind =
   | 'extra_time_start'
   | 'extra_time_half_time'
   | 'extra_time_second_half_start'
-  | 'penalty_shootout_start';
+  | 'extra_time_end'
+  | 'penalty_shootout_start'
+  | 'penalty_shootout_end';
 
 export type TimelineEvent =
+  | PenaltyShootoutEvent
+  | {
+      id: string;
+      minute: string;
+      sortKey: number;
+      timestamp?: string;
+      teamSide: 'home' | 'away';
+      teamName: string;
+      type: 'penalty_goal' | 'penalty_saved' | 'penalty_miss';
+      playerName: string;
+      playerPictureUrl?: string;
+      homePenaltyScore?: number;
+      awayPenaltyScore?: number;
+      description?: string;
+      priority: number;
+    }
   | {
       id: string;
       minute: string;
@@ -261,7 +282,8 @@ export type TimelineEvent =
       positionX?: number;
       positionY?: number;
       priority: number;
-    };
+    }
+  | PenaltyShootoutEvent;
 
 const EVENT_PRIORITY = {
   varCheck: 1,
@@ -379,12 +401,14 @@ function buildMatchStateEvents(fifaDetail: FifaMatchDetail): TimelineEvent[] {
     );
   }
 
-  pushState(
-    'state-half-time',
-    'half_time',
-    'Half Time',
-    resolveStateMinute(fifaDetail.FirstHalfTime, "45'")
-  );
+  if (period >= 4 || isSecondHalfAvailable) {
+    pushState(
+      'state-half-time',
+      'half_time',
+      'Half Time',
+      resolveStateMinute(fifaDetail.FirstHalfTime, "45'")
+    );
+  }
 
   if (isSecondHalfAvailable) {
     pushState(
@@ -469,12 +493,19 @@ function stateKindFromTimelineEvent(event: FifaTimelineEvent): MatchStateKind | 
 
   if (event.Type === 71 || /\bvar\b/.test(combined)) return 'var_check';
   if (event.Type === 79 || event.Type === 80 || combined.includes('coin toss')) return 'coin_toss';
-  if (combined.includes('hydration')) return 'hydration_break';
-  if (combined.includes('resume')) return 'match_resumed';
-  if (event.Type === 26 || combined.includes('final whistle') || combined.includes('match end')) return 'full_time';
+  if (event.Type === 83 || combined.includes('hydration')) return 'hydration_break';
+  if (event.Type === 78 || combined.includes('resume')) return 'match_resumed';
+  if (event.Type === 26 || combined.includes('final whistle') || combined.includes('match end')) return 'match_end';
   if (event.Type === 7 && (event.Period === 5 || combined.includes('second'))) return 'second_half_start';
+  if (event.Type === 7 && event.Period === 7) return 'extra_time_start';
+  if (event.Type === 8 && event.Period === 7) return 'extra_time_half_time';
+  if (event.Type === 7 && event.Period === 9) return 'extra_time_second_half_start';
+  if (event.Type === 8 && event.Period === 9) return 'extra_time_end';
+  if (event.Type === 7 && event.Period === 11) return 'penalty_shootout_start';
+  if (event.Type === 8 && event.Period === 11) return 'penalty_shootout_end';
   if (event.Type === 7) return 'match_start';
   if (event.Type === 8 && (event.Period === 3 || combined.includes('first period'))) return 'half_time';
+  if (event.Type === 8 && event.Period === 5) return 'regular_time_end';
   if (event.Type === 8) return 'full_time';
   return null;
 }
@@ -484,7 +515,9 @@ function stateLabel(kind: MatchStateKind): string {
     match_start: 'Match Start',
     half_time: 'Half Time',
     second_half_start: 'Second Half Start',
+    regular_time_end: 'End of 2nd Half',
     full_time: 'Full Time',
+    match_end: 'Match End',
     hydration_break: 'Hydration Break',
     match_resumed: 'Match Resumed',
     var_check: 'VAR Check',
@@ -492,7 +525,9 @@ function stateLabel(kind: MatchStateKind): string {
     extra_time_start: 'Extra Time Start',
     extra_time_half_time: 'Extra Time Half Time',
     extra_time_second_half_start: 'Extra Time Second Half Start',
+    extra_time_end: 'Extra Time End',
     penalty_shootout_start: 'Penalty Shootout Start',
+    penalty_shootout_end: 'Penalty Shootout End',
   };
   return labels[kind];
 }
@@ -558,8 +593,32 @@ export function buildTimelineEventsFromApi(
       
       // Ensure Second Half Start always sorts above First Half stoppage time
       if (stateKind === 'second_half_start' && finalSortKey < 4600) {
-        finalMinute = "46'";
+        finalMinute = finalMinute || "46'";
         finalSortKey = 4600;
+      } else if (stateKind === 'regular_time_end' || (stateKind === 'full_time' && event.Period === 5)) {
+        finalMinute = finalMinute || "FT";
+        finalSortKey = 9100;
+      } else if (stateKind === 'extra_time_start') {
+        finalMinute = finalMinute || "90'";
+        finalSortKey = 9200;
+      } else if (stateKind === 'extra_time_half_time') {
+        finalMinute = finalMinute || "105'";
+        finalSortKey = 10600;
+      } else if (stateKind === 'extra_time_second_half_start') {
+        finalMinute = finalMinute || "106'";
+        finalSortKey = 10601;
+      } else if (stateKind === 'extra_time_end') {
+        finalMinute = finalMinute || "120'";
+        finalSortKey = 12500;
+      } else if (stateKind === 'penalty_shootout_start') {
+        finalMinute = finalMinute || "PSO";
+        finalSortKey = 12600;
+      } else if (stateKind === 'penalty_shootout_end') {
+        finalMinute = finalMinute || "PSO";
+        finalSortKey = 15001;
+      } else if (stateKind === 'full_time' || stateKind === 'match_end') {
+        finalMinute = "FT";
+        finalSortKey = 20000;
       }
 
       events.push({
@@ -582,7 +641,29 @@ export function buildTimelineEventsFromApi(
     const teamName = side === 'home' ? homeTeamName : awayTeamName;
     const player = event.IdPlayer ? playerMap.get(String(event.IdPlayer)) : undefined;
 
-    if (isGoalTimelineEvent(event)) {
+    if (event.Period === 11 && event.Type !== 7 && event.Type !== 8) {
+      const isGoal = event.Type === 41;
+      const isSaved = event.Type === 60;
+      const penaltySortKey = sortKey === 0 ? 15000 : sortKey;
+      events.push({
+        id: createEventId('timeline-shootout', event as Record<string, unknown>),
+        minute: minute || "PSO",
+        sortKey: penaltySortKey,
+        timestamp: event.Timestamp,
+        type: isGoal ? 'penalty_goal' : (isSaved ? 'penalty_saved' : 'penalty_miss'),
+        teamSide: side,
+        teamName,
+        playerName: getPlayerDisplayName(player),
+        playerPictureUrl: getPlayerPictureUrl(player),
+        homePenaltyScore: event.HomePenaltyGoals ?? event.HomeTeamPenaltyScore,
+        awayPenaltyScore: event.AwayPenaltyGoals ?? event.AwayTeamPenaltyScore,
+        description,
+        priority: EVENT_PRIORITY.goal,
+      });
+      continue;
+    }
+
+    if (isGoalTimelineEvent(event) && event.Period !== 11) {
       const goalType = isOwnGoalTimelineEvent(event) ? 34 : isPenaltyGoalTimelineEvent(event) ? 33 : 0;
       events.push({
         id: createEventId('timeline-goal', event as Record<string, unknown>),
@@ -641,24 +722,22 @@ export function buildTimelineEventsFromApi(
     }
 
     const simpleLabel = simpleTimelineEventLabel(event);
-    if (simpleLabel) {
-      events.push({
-        id: createEventId('timeline-simple', event as Record<string, unknown>),
-        minute,
-        sortKey,
-        timestamp: event.Timestamp,
-        type: 'simple',
-        eventType: event.Type ?? -1,
-        teamSide: side,
-        teamName,
-        label: simpleLabel,
-        playerName: player ? getPlayerDisplayName(player) : undefined,
-        description,
-        positionX: event.PositionX,
-        positionY: event.PositionY,
-        priority: simpleTimelineEventPriority(event.Type, simpleLabel),
-      });
-    }
+    events.push({
+      id: createEventId('timeline-simple', event as Record<string, unknown>),
+      minute,
+      sortKey,
+      timestamp: event.Timestamp,
+      type: 'simple',
+      eventType: event.Type ?? -1,
+      teamSide: side,
+      teamName,
+      label: simpleLabel ?? (getTimelineText(event.TypeLocalized) || 'Unknown Event'),
+      playerName: player ? getPlayerDisplayName(player) : undefined,
+      description,
+      positionX: event.PositionX,
+      positionY: event.PositionY,
+      priority: simpleTimelineEventPriority(event.Type, simpleLabel || ''),
+    });
   }
 
   // Deduplicate FULL TIME events: API can send multiple full time events (e.g. Type 8 and Type 26)

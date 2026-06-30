@@ -39,8 +39,9 @@ function FeaturedMatchCard({ featured }: { featured: FeaturedMatch }) {
       ? matchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : 'TBD';
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && match.homeScore! > match.awayScore!;
-  const awayWon = hasScore && match.awayScore! > match.homeScore!;
+  const isDraw = hasScore && match.homeScore === match.awayScore;
+  const homeWon = hasScore && (match.homeScore! > match.awayScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.homePenaltyScore > match.awayPenaltyScore));
+  const awayWon = hasScore && (match.awayScore! > match.homeScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.awayPenaltyScore > match.homePenaltyScore));
   const statusLabel = getMatchStatusLabel(match);
 
   return (
@@ -74,8 +75,14 @@ function FeaturedMatchCard({ featured }: { featured: FeaturedMatch }) {
           <TeamSide name={match.homeTeam} flagCode={match.homeFlagCode} winner={homeWon} />
           <div className="text-center">
             {hasScore ? (
-              <span className="font-display text-2xl font-black text-accent">
-                {match.homeScore}-{match.awayScore}
+              <span className="font-display flex items-center justify-center gap-1.5 text-2xl font-black text-accent whitespace-nowrap">
+                {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                  <span className="text-sm font-semibold text-accent/70">({match.homePenaltyScore})</span>
+                )}
+                <span>{match.homeScore}-{match.awayScore}</span>
+                {match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null && (
+                  <span className="text-sm font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+                )}
               </span>
             ) : (
               <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">VS</span>

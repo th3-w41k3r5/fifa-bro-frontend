@@ -26,11 +26,11 @@ interface MatchCentreSectionProps {
 
 function getFeedEventMergeKey(event: TimelineEvent): string {
   const actor =
-    event.type === 'goal' || event.type === 'booking'
+    event.type === 'goal' || event.type === 'booking' || event.type === 'penalty_goal' || event.type === 'penalty_miss' || event.type === 'penalty_saved'
       ? event.playerName
       : event.type === 'substitution'
         ? `${event.playerOn}-${event.playerOff}`
-        : event.label;
+        : 'label' in event ? event.label : '';
 
   // For unique match state events, don't include the minute to ensure they deduplicate correctly
   // even if the API and static data use different minutes (e.g. 90+9' vs 99')
@@ -85,7 +85,7 @@ export default function MatchCentreSection({
 
       try {
         const response = await fetch(
-          `https://api.fifa.com/api/v3/timelines/${fifaMatchId}?language=en`
+          `https://api.fifa.com/api/v3/timelines/17/285023/${fifaDetail.IdStage}/${fifaMatchId}?language=en`
         );
         if (!response.ok) throw new Error(`FIFA timeline request failed: ${response.status}`);
         const data = (await response.json()) as { Event?: FifaTimelineEvent[] };

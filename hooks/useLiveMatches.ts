@@ -8,6 +8,8 @@ export type LiveMatch = {
     period?: string;
     homeScore?: number;
     awayScore?: number;
+    homePenaltyScore?: number;
+    awayPenaltyScore?: number;
     goalScorers?: MatchGoalScorers;
     fifaDetail?: FifaMatchDetail | Record<string, unknown> | null;
 };
@@ -60,6 +62,8 @@ export function applyLiveUpdateToMatches(
             livePeriod: live.period,
             homeScore: live.homeScore,
             awayScore: live.awayScore,
+            homePenaltyScore: live.homePenaltyScore,
+            awayPenaltyScore: live.awayPenaltyScore,
             goalScorers,
             ...(live.fifaDetail != null
                 ? { fifaDetail: live.fifaDetail as FifaMatchDetail }

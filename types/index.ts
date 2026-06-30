@@ -139,10 +139,15 @@ export interface FifaTimelineEvent {
   GoalGatePositionX?: number;
   GoalGatePositionY?: number;
   VarNotificationData?: unknown;
+  HomeTeamPenaltyScore?: number;
+  AwayTeamPenaltyScore?: number;
+  HomePenaltyGoals?: number;
+  AwayPenaltyGoals?: number;
 }
 
 export interface FifaMatchDetail {
   IdMatch?: string;
+  IdStage?: string;
   MatchNumber?: number;
   Attendance?: string;
   StageName?: FifaLocalizedField[];
@@ -174,6 +179,22 @@ export interface FifaMatchDetail {
   AwayTeamPenaltyScore?: number | null;
   HomeTeam?: FifaTeamDetail;
   AwayTeam?: FifaTeamDetail;
+  Event?: FifaTimelineEvent[];
+}
+export interface PenaltyShootoutEvent {
+  id: string;
+  minute: string;
+  sortKey: number;
+  timestamp?: string;
+  teamSide: 'home' | 'away';
+  teamName: string;
+  type: 'penalty_goal' | 'penalty_miss' | 'penalty_saved';
+  playerName: string;
+  playerPictureUrl?: string;
+  homePenaltyScore?: number;
+  awayPenaltyScore?: number;
+  description?: string;
+  priority: number;
 }
 
 export interface MatchSummary {
@@ -195,6 +216,8 @@ export interface MatchSummary {
   status?: string;
   homeScore?: number;
   awayScore?: number;
+  homePenaltyScore?: number;
+  awayPenaltyScore?: number;
   matchDate: string;
   kickoffTime: string;
   stage: string;
@@ -206,6 +229,10 @@ export interface MatchSummary {
   liveMinute?: number;
   livePeriod?: string;
   goalScorers?: MatchGoalScorers;
+  shootoutPenalties?: {
+    home: PenaltyShootoutEvent[];
+    away: PenaltyShootoutEvent[];
+  };
   fifaDetail?: FifaMatchDetail;
 }
 

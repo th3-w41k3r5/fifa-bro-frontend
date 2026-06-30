@@ -38,8 +38,9 @@ function MatchFixtureCard({ match }: { match: MatchSummary }) {
       ? matchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : 'TBD';
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && match.homeScore! > match.awayScore!;
-  const awayWon = hasScore && match.awayScore! > match.homeScore!;
+  const isDraw = hasScore && match.homeScore === match.awayScore;
+  const homeWon = hasScore && (match.homeScore! > match.awayScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.homePenaltyScore > match.awayPenaltyScore));
+  const awayWon = hasScore && (match.awayScore! > match.homeScore! || (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.awayPenaltyScore > match.homePenaltyScore));
   const statusLabel = getMatchStatusLabel(match);
 
   return (

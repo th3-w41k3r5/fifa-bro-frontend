@@ -33,10 +33,23 @@ export const Flag: React.FC<FlagProps> = ({ flagCode, size = 'md', variant = 'ro
   // Use flag-icons from jsdelivr (CORS-friendly)
   const flagUrl = `https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${flagCode.toLowerCase()}.svg`;
 
+  if (flagCode.toLowerCase() === 'un' || flagCode.toLowerCase() === 'tbd' || !flagCode) {
+    return (
+      <div
+        className={`flex items-center justify-center ${radiusClass} bg-white/5 border border-dashed border-white/20 rounded`}
+        style={{ width: pixelSize, height: pixelSize }}
+        role="img"
+        aria-label={alt || `TBD Flag`}
+      >
+        <span className="text-[10px] font-bold text-white/40">?</span>
+      </div>
+    );
+  }
+
   if (hasError) {
     return (
       <div
-        className={`flex items-center justify-center ${radiusClass} bg-surface border border-border`}
+        className={`flex items-center justify-center ${radiusClass} bg-surface border border-border rounded`}
         style={{ width: pixelSize, height: pixelSize }}
         role="img"
         aria-label={alt || `Flag for ${flagCode}`}

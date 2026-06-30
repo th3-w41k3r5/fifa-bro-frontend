@@ -61,6 +61,8 @@ interface MatchCardProps {
 }
 
 const MatchCard: React.FC<MatchCardProps> = memo(function MatchCard({ storyline, match, index }) {
+
+
   const kickoffTime = new Date(`${match.matchDate}T${match.kickoffTime}`);
   const matchDate = new Date(match.matchDate);
 
@@ -135,7 +137,15 @@ const MatchCard: React.FC<MatchCardProps> = memo(function MatchCard({ storyline,
             </span>
           </div>
 
-          <span className="text-[8px] text-text-secondary/40 uppercase tracking-[0.1em] flex-shrink-0 font-bold">vs</span>
+          <div className="flex items-center gap-1 font-fifa-bold text-sm">
+            {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+              <span className="text-sm font-semibold text-accent/70">({match.homePenaltyScore})</span>
+            )}
+            <span>{match.homeScore} - {match.awayScore}</span>
+            {match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null && (
+              <span className="text-sm font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+            )}
+          </div>
 
           <div className="flex items-center justify-end gap-1.5 flex-1 min-w-0">
             <span className="text-xs font-fifa-semi text-text-primary truncate text-right uppercase tracking-[-0.005em]">

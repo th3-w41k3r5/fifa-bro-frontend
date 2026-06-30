@@ -69,8 +69,8 @@ const MatchCard: React.FC<{
   const live = isMatchLive(match);
 
   const hasScore = match?.homeScore != null && match?.awayScore != null;
-  const homeWins = hasScore && match!.homeScore! > match!.awayScore!;
-  const awayWins = hasScore && match!.awayScore! > match!.homeScore!;
+  const homeWins = hasScore && (match!.homeScore! > match!.awayScore! || (match!.homePenaltyScore != null && match!.awayPenaltyScore != null && match!.homePenaltyScore > match!.awayPenaltyScore));
+  const awayWins = hasScore && (match!.awayScore! > match!.homeScore! || (match!.homePenaltyScore != null && match!.awayPenaltyScore != null && match!.awayPenaltyScore > match!.homePenaltyScore));
 
   const statusText = completed
     ? 'FT'
@@ -97,6 +97,7 @@ const MatchCard: React.FC<{
         flagCode={match?.homeFlagCode}
         slot={match?.homeSlot}
         score={match?.homeScore}
+        penaltyScore={match?.homePenaltyScore}
         isWinner={homeWins}
         isLoser={awayWins}
         isPredicted={match?.homeIsPredicted}
@@ -109,6 +110,7 @@ const MatchCard: React.FC<{
         flagCode={match?.awayFlagCode}
         slot={match?.awaySlot}
         score={match?.awayScore}
+        penaltyScore={match?.awayPenaltyScore}
         isWinner={awayWins}
         isLoser={homeWins}
         isPredicted={match?.awayIsPredicted}
@@ -126,11 +128,12 @@ const TeamRow: React.FC<{
   flagCode?: string;
   slot?: string;
   score?: number;
+  penaltyScore?: number;
   isWinner?: boolean;
   isLoser?: boolean;
   isPredicted?: boolean;
   qualificationStatus?: string;
-}> = ({ name, flagCode, slot, score, isWinner, isLoser, isPredicted, qualificationStatus }) => {
+}> = ({ name, flagCode, slot, score, penaltyScore, isWinner, isLoser, isPredicted, qualificationStatus }) => {
   const displayName = name || slot || 'TBD';
   const isTbd = !name;
   const isProvisional = qualificationStatus === 'provisional' || qualificationStatus === 'Provisional';
@@ -162,9 +165,10 @@ const TeamRow: React.FC<{
       {isProvisional && <span className="ko-card__badge ko-card__badge--provisional">PROV</span>}
 
       {score != null && (
-        <span className={`ko-card__score ${isWinner ? 'ko-card__score--winner' : ''} ${isLoser ? 'ko-card__score--loser' : ''}`}>
+        <div className={scoreClasses.join(' ')}>
           {score}
-        </span>
+          {penaltyScore != null && <span className="ml-1 text-[10px] font-bold opacity-70">({penaltyScore})</span>}
+        </div>
       )}
     </div>
   );
@@ -316,8 +320,8 @@ const DesktopBracket: React.FC<{ matches: MatchSummary[] }> = ({ matches }) => {
                     }
                     return (
                       <>
-                        <div className="w-8 h-6 ko-card__flag ko-card__flag--empty">
-                          <span style={{ fontSize: 8, opacity: 0.25, fontWeight: 700 }}>?</span>
+                        <div className="w-8 h-6 rounded border border-dashed border-white/20 bg-white/5 flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-white/40">?</span>
                         </div>
                         <span className="font-fifa-semi text-lg text-white/30 tracking-widest uppercase">TBD</span>
                       </>

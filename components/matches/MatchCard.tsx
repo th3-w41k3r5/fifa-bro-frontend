@@ -18,9 +18,18 @@ export default function MatchCard({ match }: MatchCardProps) {
     matchDate && !isNaN(matchDate.getTime())
       ? matchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : 'TBD';
+  const isDraw = match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore === match.awayScore;
   const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && match.homeScore! > match.awayScore!;
-  const awayWon = hasScore && match.awayScore! > match.homeScore!;
+  const homeWon =
+    match.homeScore !== undefined &&
+    match.awayScore !== undefined &&
+    (match.homeScore > match.awayScore ||
+      (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.homePenaltyScore > match.awayPenaltyScore));
+  const awayWon =
+    match.homeScore !== undefined &&
+    match.awayScore !== undefined &&
+    (match.awayScore > match.homeScore ||
+      (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.awayPenaltyScore > match.homePenaltyScore));
   const statusLabel = getMatchStatusLabel(match);
 
   return (
@@ -47,7 +56,7 @@ export default function MatchCard({ match }: MatchCardProps) {
             <span className="ml-auto">{dateStr}</span>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.025] px-3 py-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.025] px-3 py-4">
             <div className="flex min-w-0 flex-col items-start gap-2">
               <TeamLogo
                 flagCode={match.homeFlagCode || (match.homeTeam?.toLowerCase().slice(0, 2) ?? 'un')}
@@ -77,9 +86,15 @@ export default function MatchCard({ match }: MatchCardProps) {
 
             <div className="text-center">
               {hasScore ? (
-                <span className="font-display text-2xl font-black text-accent">
-                  {match.homeScore}-{match.awayScore}
-                </span>
+                <div className="font-display flex items-center justify-center gap-1.5 text-2xl font-black text-accent whitespace-nowrap">
+                  {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                    <span className="text-sm font-semibold text-accent/70">({match.homePenaltyScore})</span>
+                  )}
+                  <span>{match.homeScore} - {match.awayScore}</span>
+                  {match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (
+                    <span className="text-sm font-semibold text-accent/70">({match.awayPenaltyScore})</span>
+                  )}
+                </div>
               ) : (
                 <span className="text-xs font-black uppercase tracking-[0.18em] text-accent">VS</span>
               )}

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { TeamLogo } from '@/components';
 import { MatchStateKind, TimelineEvent } from '@/lib/fifaMatchUtils';
+import { PenaltyShootoutEvent } from '@/types';
 import { GoalTypeBadge, RedCardIcon, YellowCardIcon } from './matchCentreIcons';
 
 interface MatchTimelineProps {
@@ -41,6 +42,9 @@ function SectionHeader({ title, icon }: { title: string; icon: React.ReactNode }
 
 function getEventLabel(event: TimelineEvent): string {
   if (event.type === 'match_state') return event.label;
+  if (event.type === 'penalty_goal') return 'Shootout Goal';
+  if (event.type === 'penalty_miss') return 'Shootout Miss';
+  if (event.type === 'penalty_saved') return 'Shootout Saved';
   if (event.type === 'goal') {
     if (event.goalType === 1) return 'Penalty Goal';
     if (event.goalType === 3) return 'Own Goal';
@@ -49,6 +53,7 @@ function getEventLabel(event: TimelineEvent): string {
   if (event.type === 'booking') {
     return event.cardType === 2 ? 'Red Card' : 'Yellow Card';
   }
+  if (event.type === 'simple') return event.label;
   return 'Substitution';
 }
 
@@ -77,17 +82,21 @@ function getMatchStateIcon(stateKind: MatchStateKind) {
 
 function getCardShellClass(event: TimelineEvent): string {
   const base =
-    'relative flex w-full min-w-0 max-w-[280px] flex-col gap-2 rounded-xl border px-4 break-words backdrop-blur-sm transition-all duration-200';
+    'relative flex w-full min-w-0 max-w-[320px] flex-col gap-2 rounded-xl border px-4 break-words backdrop-blur-sm transition-all duration-200';
 
   if (event.type === 'match_state') {
     return `${base} min-h-[72px] py-3.5 border-white/[0.07] bg-white/[0.04] shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.06)]`;
   }
 
-  if (event.type === 'goal') {
-    const penaltyBoost = event.goalType === 1
+  if (event.type === 'goal' || event.type === 'penalty_goal') {
+    const penaltyBoost = (event.type === 'goal' && event.goalType === 1) || event.type === 'penalty_goal'
       ? 'border-accent/30 bg-accent/[0.06] shadow-[0_2px_16px_rgba(0,183,255,0.08),inset_0_1px_0_rgba(0,183,255,0.1)]'
       : 'border-accent/20 bg-accent/[0.04] shadow-[0_2px_16px_rgba(0,183,255,0.05),inset_0_1px_0_rgba(0,183,255,0.06)]';
     return `${base} min-h-[88px] py-3.5 ${penaltyBoost}`;
+  }
+  
+  if (event.type === 'penalty_miss' || event.type === 'penalty_saved') {
+    return `${base} min-h-[88px] py-3.5 border-danger/30 bg-danger/[0.04] shadow-[0_2px_16px_rgba(255,0,0,0.05),inset_0_1px_0_rgba(255,0,0,0.06)]`;
   }
 
   if (event.type === 'booking') {
@@ -102,9 +111,9 @@ function EventTypeLabel({ event }: { event: TimelineEvent }) {
   const tone =
     event.type === 'match_state'
       ? 'text-text-primary'
-      : event.type === 'goal'
+      : event.type === 'goal' || event.type === 'penalty_goal'
         ? 'text-accent'
-        : event.type === 'booking' && event.cardType === 2
+        : event.type === 'penalty_miss' || event.type === 'penalty_saved' || (event.type === 'booking' && event.cardType === 2)
           ? 'text-danger'
           : event.type === 'booking'
             ? 'text-warning'
@@ -321,6 +330,129 @@ function TimelineRow({
   );
 }
 
+function PenaltyShootoutSummary({
+  events,
+  homeFlagCode,
+  awayFlagCode,
+}: {
+  events: PenaltyShootoutEvent[];
+  homeFlagCode?: string;
+  awayFlagCode?: string;
+}) {
+  const homeKicks = events.filter((e) => e.teamSide === 'home');
+  const awayKicks = events.filter((e) => e.teamSide === 'away');
+
+  const lastEvent = events[events.length - 1];
+  const homeFinalScore = lastEvent?.homePenaltyScore ?? 0;
+  const awayFinalScore = lastEvent?.awayPenaltyScore ?? 0;
+
+  const homeTeamName = homeKicks[0]?.teamName || 'Home';
+  const awayTeamName = awayKicks[0]?.teamName || 'Away';
+
+  let winnerText = '';
+  if (homeFinalScore > awayFinalScore) winnerText = `${homeTeamName} wins!!!`;
+  else if (awayFinalScore > homeFinalScore) winnerText = `${awayTeamName} wins!!!`;
+
+  const firstKickerSide = events[0]?.teamSide === 'home' ? homeTeamName : awayTeamName;
+
+  const maxRounds = Math.max(homeKicks.length, awayKicks.length);
+  const rows = Array.from({ length: maxRounds }).map((_, i) => ({
+    home: homeKicks[i],
+    away: awayKicks[i],
+  }));
+
+  return (
+    <div className="mb-8 overflow-hidden rounded-[20px] border border-white/[0.08] bg-[#1a1d24]">
+      <div className="flex flex-col items-center justify-center p-6 text-center">
+        <h3 className="mb-4 text-[11px] font-black uppercase tracking-[0.24em] text-text-secondary">
+          Penalty Shootout
+        </h3>
+        {winnerText && <h2 className="mb-2 text-xl font-bold text-white">{winnerText}</h2>}
+        <p className="text-base font-semibold text-text-secondary">
+          {homeFinalScore} - {awayFinalScore}
+        </p>
+      </div>
+
+      <div className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-3">
+        <div className="grid grid-cols-[1fr_80px_1fr] items-center gap-4">
+          <div className="text-sm font-medium text-text-secondary">{homeTeamName}</div>
+          <div className="flex items-center justify-center gap-3">
+            <TeamLogo flagCode={homeFlagCode || 'un'} teamName={homeTeamName} size="sm" />
+            <TeamLogo flagCode={awayFlagCode || 'un'} teamName={awayTeamName} size="sm" />
+          </div>
+          <div className="text-right text-sm font-medium text-text-secondary">{awayTeamName}</div>
+        </div>
+      </div>
+
+      <div className="flex flex-col">
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-[1fr_80px_1fr] items-center gap-4 border-b border-white/[0.04] px-6 py-4 last:border-b-0"
+          >
+            <div className="flex min-w-0 flex-col">
+              {row.home ? (
+                <>
+                  <span className="truncate text-[15px] font-bold text-white">
+                    {row.home.playerName}
+                  </span>
+                  <span className="mt-0.5 text-xs font-medium text-text-secondary">
+                    {row.home.type === 'penalty_goal' ? 'Goal' : 'Miss'} ({row.home.homePenaltyScore ?? 0} - {row.home.awayPenaltyScore ?? 0})
+                  </span>
+                </>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-center gap-6">
+              <span
+                className={`flex w-6 items-center justify-center text-lg ${
+                  row.home
+                    ? row.home.type === 'penalty_goal'
+                      ? 'text-emerald-500'
+                      : 'text-red-500'
+                    : ''
+                }`}
+              >
+                {row.home ? (row.home.type === 'penalty_goal' ? '✓' : '✗') : ''}
+              </span>
+              <span
+                className={`flex w-6 items-center justify-center text-lg ${
+                  row.away
+                    ? row.away.type === 'penalty_goal'
+                      ? 'text-emerald-500'
+                      : 'text-red-500'
+                    : ''
+                }`}
+              >
+                {row.away ? (row.away.type === 'penalty_goal' ? '✓' : '✗') : ''}
+              </span>
+            </div>
+
+            <div className="flex min-w-0 flex-col items-end text-right">
+              {row.away ? (
+                <>
+                  <span className="truncate text-[15px] font-bold text-white">
+                    {row.away.playerName}
+                  </span>
+                  <span className="mt-0.5 text-xs font-medium text-text-secondary">
+                    {row.away.type === 'penalty_goal' ? 'Goal' : 'Miss'} ({row.away.homePenaltyScore ?? 0} - {row.away.awayPenaltyScore ?? 0})
+                  </span>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-white/[0.06] bg-white/[0.02] p-4 text-center">
+        <span className="text-xs font-medium text-text-secondary">
+          {firstKickerSide} first to kick
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function MatchTimeline({
   events,
   homeFlagCode,
@@ -337,19 +469,31 @@ export default function MatchTimeline({
     );
   }
 
+  const regularEvents = events.filter((e) => e.type !== 'penalty_goal' && e.type !== 'penalty_miss' && e.type !== 'penalty_saved');
+  const shootoutEvents = events.filter((e) => e.type === 'penalty_goal' || e.type === 'penalty_miss' || e.type === 'penalty_saved') as PenaltyShootoutEvent[];
+  shootoutEvents.sort((a, b) => a.sortKey - b.sortKey || (a.timestamp || '').localeCompare(b.timestamp || ''));
+
   return (
     <div className="space-y-6">
       <SectionHeader title="Match Timeline" icon={<Activity size={28} />} />
 
+      {shootoutEvents.length > 0 && (
+        <PenaltyShootoutSummary
+          events={shootoutEvents}
+          homeFlagCode={homeFlagCode}
+          awayFlagCode={awayFlagCode}
+        />
+      )}
+
       <div className="relative mx-auto min-w-0 max-w-3xl overflow-hidden">
         {/* Central spine — soft gradient */}
         <div
-          className="pointer-events-none absolute left-1/2 top-2 bottom-2 hidden w-px -translate-x-1/2 bg-gradient-to-b from-accent/15 via-white/[0.08] to-accent/10 sm:block"
+          className="pointer-events-none absolute bottom-2 left-1/2 top-2 hidden w-px -translate-x-1/2 bg-gradient-to-b from-accent/15 via-white/[0.08] to-accent/10 sm:block"
           aria-hidden
         />
 
         <div className="space-y-5 sm:space-y-6">
-          {events.map((event, index) => (
+          {regularEvents.map((event, index) => (
             <TimelineRow
               key={event.id}
               event={event}

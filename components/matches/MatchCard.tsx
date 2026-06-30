@@ -18,18 +18,16 @@ export default function MatchCard({ match }: MatchCardProps) {
     matchDate && !isNaN(matchDate.getTime())
       ? matchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : 'TBD';
-  const isDraw = match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore === match.awayScore;
-  const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon =
-    match.homeScore !== undefined &&
-    match.awayScore !== undefined &&
-    (match.homeScore > match.awayScore ||
-      (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.homePenaltyScore > match.awayPenaltyScore));
-  const awayWon =
-    match.homeScore !== undefined &&
-    match.awayScore !== undefined &&
-    (match.awayScore > match.homeScore ||
-      (isDraw && match.homePenaltyScore != null && match.awayPenaltyScore != null && match.awayPenaltyScore > match.homePenaltyScore));
+  const homeScoreNum = Number(match.homeScore);
+  const awayScoreNum = Number(match.awayScore);
+  const hasScore = match.homeScore !== undefined && match.awayScore !== undefined && !isNaN(homeScoreNum) && !isNaN(awayScoreNum);
+  
+  const homePenNum = Number(match.homePenaltyScore);
+  const awayPenNum = Number(match.awayPenaltyScore);
+  const hasPenalties = match.homePenaltyScore != null && match.awayPenaltyScore != null && !isNaN(homePenNum) && !isNaN(awayPenNum);
+
+  const homeWon = hasScore && (homeScoreNum > awayScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && homePenNum > awayPenNum));
+  const awayWon = hasScore && (awayScoreNum > homeScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && awayPenNum > homePenNum));
   const statusLabel = getMatchStatusLabel(match);
 
   return (

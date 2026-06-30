@@ -6,11 +6,13 @@ import { Goal } from 'lucide-react';
 interface MatchGoalScorersProps {
   goalScorers: GoalScorer[];
   maxHeight?: string;
+  align?: 'left' | 'right';
 }
 
 export function MatchGoalScorers({
   goalScorers,
   maxHeight = 'auto',
+  align = 'left',
 }: MatchGoalScorersProps) {
   if (!goalScorers?.length) {
     return null;
@@ -38,13 +40,7 @@ export function MatchGoalScorers({
         return (
           <div
             key={`${goal.minute}-${goal.playerName}-${index}`}
-            className="
-              flex items-start gap-1.5
-              text-[11px] md:text-xs
-              leading-tight
-              text-text-secondary
-              font-medium
-            "
+            className={`flex items-start gap-1.5 text-[11px] md:text-xs leading-tight text-text-secondary font-medium ${align === 'right' ? 'flex-row-reverse justify-start text-right' : ''}`}
           >
             <Goal
               size={10}

@@ -33,9 +33,16 @@ export default function MatchHero({ match, badges = [] }: MatchHeroProps) {
     matchDate && !isNaN(matchDate.getTime())
       ? matchDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
       : 'Date TBD';
-  const hasScore = match.homeScore !== undefined && match.awayScore !== undefined;
-  const homeWon = hasScore && (match.homeScore! > match.awayScore! || (match.homeScore === match.awayScore && (match.homePenaltyScore ?? 0) > (match.awayPenaltyScore ?? 0)));
-  const awayWon = hasScore && (match.awayScore! > match.homeScore! || (match.homeScore === match.awayScore && (match.awayPenaltyScore ?? 0) > (match.homePenaltyScore ?? 0)));
+  const homeScoreNum = Number(match.homeScore);
+  const awayScoreNum = Number(match.awayScore);
+  const hasScore = match.homeScore !== undefined && match.awayScore !== undefined && !isNaN(homeScoreNum) && !isNaN(awayScoreNum);
+  
+  const homePenNum = Number(match.homePenaltyScore);
+  const awayPenNum = Number(match.awayPenaltyScore);
+  const hasPenalties = match.homePenaltyScore != null && match.awayPenaltyScore != null && !isNaN(homePenNum) && !isNaN(awayPenNum);
+
+  const homeWon = hasScore && (homeScoreNum > awayScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && homePenNum > awayPenNum));
+  const awayWon = hasScore && (awayScoreNum > homeScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && awayPenNum > homePenNum));
   const statusLabel = getMatchStatusLabel(match);
 
   // Show goal scorers only for live or complete matches
@@ -325,7 +332,7 @@ function TeamBlock({
         )}
         {showGoalScorers && (
           <div className={align === 'right' ? 'text-right' : ''}>
-            <MatchGoalScorers goalScorers={goalScorers} />
+            <MatchGoalScorers goalScorers={goalScorers} align={align} />
           </div>
         )}
       </div>

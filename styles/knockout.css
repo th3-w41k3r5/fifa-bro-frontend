@@ -90,8 +90,8 @@
 }
 
 /* Depth-based connector intensity */
-.bm__conn--d1 { --conn-color: rgba(255,255,255,0.10); }
-.bm__conn--d2 { --conn-color: rgba(255,255,255,0.12); }
+.bm__conn--d1 { --conn-color: rgba(255,255,255,0.13); }
+.bm__conn--d2 { --conn-color: rgba(255,255,255,0.13); }
 .bm__conn--d3 { --conn-color: rgba(255,255,255,0.15); }
 
 /* Bracket shape: ──┐│┘ */
@@ -302,12 +302,20 @@
 
 .ko-card__name {
   flex: 1;
+  min-width: 0;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  display: block;
+}
+
+.ko-card__name-inner {
+  display: inline-block;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.01em;
+  vertical-align: bottom;
 }
 
 .ko-card__name--tbd {
@@ -318,7 +326,7 @@
 }
 
 .ko-card__name--winner .ko-card__name-inner {
-  border-bottom: 2px solid #34d399; /* emerald-400 */
+  border-bottom: 1px solid #34d399; /* emerald-400 */
   padding-bottom: 1px;
 }
 .ko-card__name--loser  { opacity: 0.4; font-weight: 500; }

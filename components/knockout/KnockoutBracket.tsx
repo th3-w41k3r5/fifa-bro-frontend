@@ -68,9 +68,16 @@ const MatchCard: React.FC<{
   const completed = isMatchCompleted(match);
   const live = isMatchLive(match);
 
-  const hasScore = match?.homeScore != null && match?.awayScore != null;
-  const homeWins = hasScore && (match!.homeScore! > match!.awayScore! || (match!.homePenaltyScore != null && match!.awayPenaltyScore != null && match!.homePenaltyScore > match!.awayPenaltyScore));
-  const awayWins = hasScore && (match!.awayScore! > match!.homeScore! || (match!.homePenaltyScore != null && match!.awayPenaltyScore != null && match!.awayPenaltyScore > match!.homePenaltyScore));
+  const homeScoreNum = Number(match?.homeScore);
+  const awayScoreNum = Number(match?.awayScore);
+  const hasScore = match?.homeScore != null && match?.awayScore != null && !isNaN(homeScoreNum) && !isNaN(awayScoreNum);
+  
+  const homePenNum = Number(match?.homePenaltyScore);
+  const awayPenNum = Number(match?.awayPenaltyScore);
+  const hasPenalties = match?.homePenaltyScore != null && match?.awayPenaltyScore != null && !isNaN(homePenNum) && !isNaN(awayPenNum);
+
+  const homeWins = hasScore && (homeScoreNum > awayScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && homePenNum > awayPenNum));
+  const awayWins = hasScore && (awayScoreNum > homeScoreNum || (homeScoreNum === awayScoreNum && hasPenalties && awayPenNum > homePenNum));
 
   const statusText = completed
     ? 'FT'

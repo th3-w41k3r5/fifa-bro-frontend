@@ -7,7 +7,8 @@ import { StorylineSummary } from '@/types';
 interface MatchEditorialProps {
   homeTeam: string;
   awayTeam: string;
-  group: string;
+  group?: string;
+  stageName?: string;
   heroText: string;
   storylines?: StorylineSummary[];
 }
@@ -16,6 +17,7 @@ export default function MatchEditorial({
   homeTeam,
   awayTeam,
   group,
+  stageName,
   heroText,
   storylines = [],
 }: MatchEditorialProps) {
@@ -38,7 +40,7 @@ export default function MatchEditorial({
           <h2 className="text-3xl font-black text-text-primary leading-tight">{heroText}</h2>
           <div className="space-y-4 text-sm text-text-secondary leading-relaxed">
             <p>
-              {homeTeam} takes on {awayTeam} in a crucial Group {group} encounter of the FIFA World Cup 2026. This match promises to be a compelling battle between two fierce competitors as they vie for qualification to the knockout stages of the tournament.
+              {homeTeam} takes on {awayTeam} in a crucial {group ? `Group ${group}` : stageName || 'World Cup'} encounter of the FIFA World Cup 2026. This match promises to be a compelling battle between two fierce competitors as they vie for {group ? 'qualification to the knockout stages' : 'advancement deeper into the tournament'}.
             </p>
             <p>
               Watch as these two nations clash in what could be a decisive moment in their tournament journey. Every goal, every save, and every play could determine their path forward in the competition.

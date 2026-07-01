@@ -142,11 +142,12 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
           />
         )}
 
-        {match.groupCode && (
+        {(match.groupCode || storylines.length > 0) && (
           <MatchEditorial
             homeTeam={match.homeTeam || match.homeSlot || 'TBD'}
             awayTeam={match.awayTeam || match.awaySlot || 'TBD'}
             group={match.groupCode}
+            stageName={match.stage}
             heroText={`${match.homeTeam || match.homeSlot || 'TBD'} vs ${match.awayTeam || match.awaySlot || 'TBD'}`}
             storylines={storylines}
           />

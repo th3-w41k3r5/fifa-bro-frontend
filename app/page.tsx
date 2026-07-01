@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { SectionTitle, LoadingState, EmptyState } from '@/components';
 import { PageContainer } from '@/components';
@@ -237,25 +237,31 @@ export default function HomePage() {
 
         {/* SECTION 3: Amazing Matches */}
         <section id="amazing-matches" className="scroll-mt-24">
-          <SectionTitle
-            title="Amazing Matches of FIFA WC 2026"
-            subtitle="All 19 matches with exclusive storylines"
-            icon={<Zap size={24} />}
-          />
-          {isLoadingStorylines && homepageStorylines.length === 0 ? (
-            <LoadingState variant="skeleton" />
-          ) : storylinesError && homepageStorylines.length === 0 ? (
-            <EmptyState title="Unable to load amazing matches" description={storylinesError} variant="error" />
-          ) : homeError && homepageStorylines.length === 0 ? (
-            <EmptyState title="Unable to load amazing matches" description={homeError} variant="error" />
-          ) : isLoadingMatches ? (
-            <LoadingState variant="skeleton" />
-          ) : matchesError ? (
-            <EmptyState title="Unable to match storylines to fixtures" description={matchesError} variant="error" />
-          ) : homepageStorylines.length > 0 ? (
-            <Storylines storylines={homepageStorylines} matches={allMatches} />
+          {homepageStorylines.length > 0 && !isLoadingStorylines && !storylinesError && !homeError && !isLoadingMatches && !matchesError ? (
+            <Suspense fallback={<LoadingState variant="skeleton" />}>
+              <Storylines storylines={homepageStorylines} matches={allMatches} />
+            </Suspense>
           ) : (
-            <EmptyState title="No matches yet" description="Amazing matches will be announced soon" />
+            <>
+              <SectionTitle
+                title="Amazing Matches of FIFA WC 2026"
+                subtitle="The biggest stories from every stage of FIFA World Cup 2026"
+                icon={<Zap size={24} />}
+              />
+              {isLoadingStorylines && homepageStorylines.length === 0 ? (
+                <LoadingState variant="skeleton" />
+              ) : storylinesError && homepageStorylines.length === 0 ? (
+                <EmptyState title="Unable to load amazing matches" description={storylinesError} variant="error" />
+              ) : homeError && homepageStorylines.length === 0 ? (
+                <EmptyState title="Unable to load amazing matches" description={homeError} variant="error" />
+              ) : isLoadingMatches ? (
+                <LoadingState variant="skeleton" />
+              ) : matchesError ? (
+                <EmptyState title="Unable to match storylines to fixtures" description={matchesError} variant="error" />
+              ) : (
+                <EmptyState title="No matches yet" description="Amazing matches will be announced soon" />
+              )}
+            </>
           )}
         </section>
 

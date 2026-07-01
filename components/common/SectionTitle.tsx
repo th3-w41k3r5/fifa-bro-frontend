@@ -15,7 +15,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({ title, subtitle, ico
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "0px 0px -100px 0px" }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="flex flex-col gap-3 mb-12 md:flex-row md:items-end md:justify-between"
+      className="flex flex-col gap-3 mb-12 md:flex-row md:items-center md:justify-between"
     >
       <div className="flex items-start gap-4">
         {icon && (
